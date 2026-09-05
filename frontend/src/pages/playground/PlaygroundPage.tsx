@@ -8,7 +8,11 @@ import {
   Clock, 
   RotateCcw
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '../../services/apiClient';
+import { soundEngine } from '../../services/soundEngine';
+import { StreamingMessage } from '../../components/common/StreamingMessage';
+import { TokenMetrics } from '../../components/common/TokenMetrics';
 
 export const PlaygroundPage: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -39,6 +43,7 @@ export const PlaygroundPage: React.FC = () => {
     const newHistory = [...messages, { role: 'user', content: userText }];
     setMessages(newHistory);
     setIsLoading(true);
+    soundEngine.playSent();
 
     try {
       const res = await apiClient.post('/playground/simulate', {
@@ -50,23 +55,27 @@ export const PlaygroundPage: React.FC = () => {
 
       if (res.data.success) {
         const data = res.data.data;
+        soundEngine.playReceived();
         setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, latency: data.latency_ms }]);
         setLastChunks(data.chunks || []);
         setLastLatency(data.latency_ms);
         setSystemPromptUsed(data.system_prompt_used || '');
+        toast.success(`تم استرجاع المعرفة (${data.latency_ms}ms) ✓`);
       }
     } catch (e) {
-      alert('حدث خطأ أثناء الاتصال بنموذج الذكاء الاصطناعي');
+      toast.error('حدث خطأ أثناء الاتصال بنموذج الذكاء الاصطناعي');
     } finally {
       setIsLoading(false);
     }
   };
 
   const resetSession = () => {
+    soundEngine.playClick();
     setMessages([]);
     setLastChunks([]);
     setLastLatency(null);
     setSystemPromptUsed('');
+    toast.info('تم مسح جلسة الاختبار والمحاكاة');
   };
 
   return (
@@ -118,7 +127,14 @@ export const PlaygroundPage: React.FC = () => {
                       : 'bg-gradient-to-r from-amber-500/20 to-amber-600/15 border border-amber-500/30 text-amber-100 rounded-bl-none shadow-lg'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.content}</p>
+                  {m.role === 'user' ? (
+                    <p className="whitespace-pre-line">{m.content}</p>
+                  ) : (
+                    <StreamingMessage
+                      content={m.content}
+                      isStreaming={idx === messages.length - 1}
+                    />
+                  )}
                   {m.latency && (
                     <span className="block text-[9px] text-amber-400/70 mt-1.5 font-bold flex items-center gap-1">
                       <Clock className="w-2.5 h-2.5" /> {m.latency}ms
@@ -134,6 +150,17 @@ export const PlaygroundPage: React.FC = () => {
               <span>البوت يقوم بتحليل السؤال واسترجاع المعرفة...</span>
             </div>
           )}
+        </div>
+
+        {/* Real-time Token Metrics & Cost Meter */}
+        <div className="px-4 py-2 border-t border-white/5 bg-slate-900/40">
+          <TokenMetrics
+            promptText={input || messages.map((m) => m.content).join(' ')}
+            replyText={messages.filter((m) => m.role === 'assistant').slice(-1)[0]?.content || ''}
+            latencyMs={lastLatency}
+            provider={params.ai_provider}
+            model={params.model_type}
+          />
         </div>
 
         {/* Input */}

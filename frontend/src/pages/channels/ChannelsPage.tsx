@@ -5,12 +5,19 @@ import {
   Send, 
   Camera, 
   Globe, 
-  Save
+  Save,
+  Smartphone
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '../../services/apiClient';
+import { soundEngine } from '../../services/soundEngine';
+import { SpotlightCard } from '../../components/common/SpotlightCard';
+import { PhoneSimulator, type ChannelPlatform } from '../../components/common/PhoneSimulator';
 
 export const ChannelsPage: React.FC = () => {
   const [channels, setChannels] = useState<any>({});
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [selectedSimulatorPlatform] = useState<ChannelPlatform>('whatsapp');
   const [widgetConfig, setWidgetConfig] = useState<any>({
     widget_color: '#d4af37',
     widget_position: 'right',
@@ -68,26 +75,29 @@ export const ChannelsPage: React.FC = () => {
 
   const handleToggle = async (platform: string) => {
     try {
+      soundEngine.playClick();
       const res = await apiClient.post(`/channels/${platform}/toggle`);
       if (res.data.success) {
-        alert(res.data.message);
+        toast.success(res.data.message || 'تم تحديث حالة القناة بنجاح ✓');
         fetchChannels();
       }
     } catch (e) {
-      alert('تعذر تبديل حالة القناة');
+      toast.error('تعذر تبديل حالة القناة');
     }
   };
 
   const handleSaveConnect = async (platform: string, payload: any) => {
     setIsSaving(true);
     try {
+      soundEngine.playClick();
       const res = await apiClient.post('/channels/connect', { platform, ...payload });
       if (res.data.success) {
-        alert(res.data.message);
+        soundEngine.playSuccess();
+        toast.success(res.data.message || 'تم حفظ وربط بيانات القناة بنجاح ✓');
         fetchChannels();
       }
     } catch (e) {
-      alert('تعذر حفظ إعدادات القناة');
+      toast.error('تعذر حفظ إعدادات القناة');
     } finally {
       setIsSaving(false);
     }
@@ -97,13 +107,15 @@ export const ChannelsPage: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
+      soundEngine.playClick();
       const res = await apiClient.post('/channels/widget/config', widgetConfig);
       if (res.data.success) {
-        alert('تم حفظ إعدادات الويدجت بنجاح ✓');
+        soundEngine.playSuccess();
+        toast.success('تم حفظ وتحديث تخصيص الويدجت بنجاح ✓');
         fetchChannels();
       }
     } catch (e) {
-      alert('تعذر حفظ إعدادات الويدجت');
+      toast.error('تعذر حفظ إعدادات الويدجت');
     } finally {
       setIsSaving(false);
     }
@@ -112,6 +124,8 @@ export const ChannelsPage: React.FC = () => {
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
+    soundEngine.playClick();
+    toast.success('تم نسخ الرمز إلى الحافظة بنجاح ✓');
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -119,21 +133,57 @@ export const ChannelsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 font-['Cairo',sans-serif] pb-12">
-      <div>
-        <h2 className="text-xl font-black text-white flex items-center gap-2">
-          <Share2 className="w-5 h-5 text-amber-400" />
-          <span>مركز قنوات التواصل الموحد (Omni-Channel Hub)</span>
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          أدر كافة قنوات التواصل لمتجرك وفعل أو عطل الردود الآلية لكل قناة بضغطة زر واحدة
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-black text-white flex items-center gap-2">
+            <Share2 className="w-5 h-5 text-amber-400" />
+            <span>مركز قنوات التواصل الموحد (Omni-Channel Hub)</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            أدر كافة قنوات التواصل لمتجرك وفعل أو عطل الردود الآلية لكل قناة مع معاينة حية على الهاتف
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playClick();
+            setShowSimulator(!showSimulator);
+          }}
+          className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer self-start sm:self-auto ${
+            showSimulator
+              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/10'
+              : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-amber-400" />
+          <span>{showSimulator ? 'إخفاء شاشة الهاتف ✕' : 'معاينة القنوات على الهاتف 📱'}</span>
+        </button>
       </div>
+
+      {/* Optional Interactive Phone Simulator Drawer */}
+      {showSimulator && (
+        <div className="p-6 rounded-3xl bg-slate-900/60 border border-amber-500/20 flex flex-col items-center justify-center animate-fadeIn">
+          <div className="text-center mb-4">
+            <h3 className="text-sm font-bold text-white flex items-center justify-center gap-2">
+              <Smartphone className="w-4 h-4 text-amber-400" />
+              <span>المعاينة الحية لقنوات التواصل</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">اختر القناة من أعلى شاشة الهاتف وجرّب إرسال رسائل حية</p>
+          </div>
+          <PhoneSimulator
+            initialPlatform={selectedSimulatorPlatform}
+            widgetColor={widgetConfig?.widget_color || '#d4af37'}
+            welcomeMessage={widgetConfig?.widget_greeting}
+          />
+        </div>
+      )}
 
       {/* 4 Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* 🟢 1. WhatsApp Cloud API Card */}
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-4">
+        <SpotlightCard className="p-6 bg-slate-900/80 border border-white/5 space-y-4" spotlightColor="rgba(37, 211, 102, 0.14)">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -147,7 +197,7 @@ export const ChannelsPage: React.FC = () => {
 
             <button
               onClick={() => handleToggle('whatsapp')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 channels.whatsapp?.is_active
                   ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -171,7 +221,7 @@ export const ChannelsPage: React.FC = () => {
                 value={waForm.access_token}
                 onChange={(e) => setWaForm({ ...waForm, access_token: e.target.value })}
                 placeholder="EAA..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
               />
             </div>
 
@@ -183,7 +233,7 @@ export const ChannelsPage: React.FC = () => {
                   value={waForm.phone_number_id}
                   onChange={(e) => setWaForm({ ...waForm, phone_number_id: e.target.value })}
                   placeholder="1029384756..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
                 />
               </div>
               <div>
@@ -192,7 +242,7 @@ export const ChannelsPage: React.FC = () => {
                   type="text"
                   value={waForm.verify_token}
                   onChange={(e) => setWaForm({ ...waForm, verify_token: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
@@ -206,23 +256,23 @@ export const ChannelsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleCopy('http://localhost:8000/api/webhook/whatsapp', 'wa')}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-300 text-[10px] font-bold border border-white/5"
+                className="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-300 text-[10px] font-bold border border-white/5 cursor-pointer"
               >
                 {copiedKey === 'wa' ? 'تم النسخ ✓' : 'نسخ'}
               </button>
             </div>
 
             <div className="flex justify-end pt-1">
-              <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl gold-btn text-xs font-bold flex items-center gap-1.5">
+              <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl gold-btn text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                 <Save className="w-3.5 h-3.5" />
                 <span>حفظ إعدادات واتساب</span>
               </button>
             </div>
           </form>
-        </div>
+        </SpotlightCard>
 
         {/* 🔵 2. Telegram Bot Card */}
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-4">
+        <SpotlightCard className="p-6 bg-slate-900/80 border border-white/5 space-y-4" spotlightColor="rgba(36, 129, 204, 0.14)">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
@@ -286,10 +336,10 @@ export const ChannelsPage: React.FC = () => {
               </button>
             </div>
           </form>
-        </div>
+        </SpotlightCard>
 
         {/* 🟡 3. Web Live Chat Widget Card */}
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-4">
+        <SpotlightCard className="p-6 bg-slate-900/80 border border-white/5 space-y-4" spotlightColor="rgba(212, 175, 55, 0.14)">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -376,10 +426,10 @@ export const ChannelsPage: React.FC = () => {
               </button>
             </div>
           </form>
-        </div>
+        </SpotlightCard>
 
         {/* 🟣 4. Instagram Direct Card */}
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-4">
+        <SpotlightCard className="p-6 bg-slate-900/80 border border-white/5 space-y-4" spotlightColor="rgba(225, 48, 108, 0.14)">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
@@ -455,13 +505,13 @@ export const ChannelsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end pt-1">
-              <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl gold-btn text-xs font-bold flex items-center gap-1.5">
+              <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl gold-btn text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                 <Save className="w-3.5 h-3.5" />
                 <span>حفظ إعدادات إنستغرام</span>
               </button>
             </div>
           </form>
-        </div>
+        </SpotlightCard>
 
       </div>
     </div>

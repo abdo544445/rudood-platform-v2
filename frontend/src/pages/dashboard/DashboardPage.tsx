@@ -33,8 +33,13 @@ import {
   Cell, 
   Legend 
 } from 'recharts';
+import { toast } from 'sonner';
 import { apiClient } from '../../services/apiClient';
 import { useAuthStore } from '../../store/useAuthStore';
+import { SpotlightCard } from '../../components/common/SpotlightCard';
+import { ActivityTicker } from '../../components/dashboard/ActivityTicker';
+import { SkeletonCard, SkeletonTable } from '../../components/common/SkeletonLoader';
+import { soundEngine } from '../../services/soundEngine';
 
 export const DashboardPage: React.FC = () => {
   const { user, bot } = useAuthStore();
@@ -43,15 +48,22 @@ export const DashboardPage: React.FC = () => {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '12m'>('30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchDashboardData = async (selectedPeriod = period) => {
+  const fetchDashboardData = async (selectedPeriod = period, showToast = false) => {
     setIsRefreshing(true);
     try {
       const res = await apiClient.get(`/dashboard/stats?period=${selectedPeriod}`);
       if (res.data.success) {
         setData(res.data.data);
+        if (showToast) {
+          soundEngine.playSuccess();
+          toast.success('تم تحديث بيانات ومؤشرات لوحة التحكم بنجاح');
+        }
       }
     } catch (e) {
       console.error('Failed to load dashboard data', e);
+      if (showToast) {
+        toast.error('تعذر جلب بيانات لوحة التحكم');
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -59,20 +71,23 @@ export const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData(period);
+    fetchDashboardData(period, false);
   }, [period]);
 
   const handlePeriodChange = (newPeriod: '7d' | '30d' | '90d' | '12m') => {
+    soundEngine.playClick();
     setPeriod(newPeriod);
   };
 
   if (loading && !data) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-amber-400 text-sm font-bold">
-          <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>جاري تحميل بيانات لوحة التحكم والمؤشرات...</span>
+      <div className="space-y-8 font-['Cairo',sans-serif] pb-12">
+        <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-3">
+          <div className="h-6 w-48 bg-slate-800 animate-pulse rounded-xl" />
+          <div className="h-4 w-72 bg-slate-800/60 animate-pulse rounded-lg" />
         </div>
+        <SkeletonCard count={4} />
+        <SkeletonTable rows={4} cols={4} />
       </div>
     );
   }
@@ -134,9 +149,9 @@ export const DashboardPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           {/* Refresh Data Button */}
           <button
-            onClick={() => fetchDashboardData(period)}
+            onClick={() => fetchDashboardData(period, true)}
             title="تحديث البيانات الفوري"
-            className="p-2.5 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/5 text-amber-300 transition-all flex items-center gap-1.5 text-xs font-bold"
+            className="p-2.5 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/5 text-amber-300 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">تحديث</span>
@@ -159,6 +174,9 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Real-Time Live Activity Ribbon Ticker ────────────────────────── */}
+      <ActivityTicker />
+
       {/* ── 2. Conversion Analytics & ROI Ribbon ────────────────────────── */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -173,7 +191,7 @@ export const DashboardPage: React.FC = () => {
               <button
                 key={p}
                 onClick={() => handlePeriodChange(p)}
-                className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all ${
+                className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                   period === p
                     ? 'gold-btn text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -187,7 +205,7 @@ export const DashboardPage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 1. Revenue Generated */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 to-slate-900 border border-amber-500/30 shadow-xl space-y-2 relative overflow-hidden transition-all hover:border-amber-500/50">
+          <SpotlightCard className="p-5 bg-gradient-to-br from-amber-500/10 to-slate-900 border border-amber-500/30 shadow-xl space-y-2 relative overflow-hidden transition-all hover:border-amber-500/50">
             <div className="flex justify-between items-start">
               <span className="text-xs text-slate-400 font-bold">الإيرادات المحققة عبر ردود</span>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black flex items-center gap-0.5">
@@ -198,10 +216,10 @@ export const DashboardPage: React.FC = () => {
               {Number(roiStats.revenue_generated ?? 0).toLocaleString()} <span className="text-xs text-slate-400 font-normal">ر.س</span>
             </h4>
             <span className="text-[10px] text-slate-400 block">مبيعات مكتملة ناتجة عن محادثات AI</span>
-          </div>
+          </SpotlightCard>
 
           {/* 2. Deflection Rate */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/10 to-slate-900 border border-emerald-500/30 shadow-xl space-y-2 transition-all hover:border-emerald-500/50">
+          <SpotlightCard className="p-5 bg-gradient-to-br from-emerald-500/10 to-slate-900 border border-emerald-500/30 shadow-xl space-y-2 transition-all hover:border-emerald-500/50">
             <div className="flex justify-between items-start">
               <span className="text-xs text-slate-400 font-bold">معدل تجنيب الموظفين (Deflection)</span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
@@ -212,10 +230,10 @@ export const DashboardPage: React.FC = () => {
               {roiStats.deflection_rate ?? 94.8}%
             </h4>
             <span className="text-[10px] text-slate-400 block">{roiStats.bot_resolved ?? 0} استفسار حُل دون تدخل بشري</span>
-          </div>
+          </SpotlightCard>
 
           {/* 3. Hours Saved */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-sky-500/10 to-slate-900 border border-sky-500/30 shadow-xl space-y-2 transition-all hover:border-sky-500/50">
+          <SpotlightCard className="p-5 bg-gradient-to-br from-sky-500/10 to-slate-900 border border-sky-500/30 shadow-xl space-y-2 transition-all hover:border-sky-500/50">
             <div className="flex justify-between items-start">
               <span className="text-xs text-slate-400 font-bold">ساعات عمل الموظفين الموفرة</span>
               <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-black">
@@ -226,10 +244,10 @@ export const DashboardPage: React.FC = () => {
               {roiStats.hours_saved ?? 0} <span className="text-xs text-slate-400 font-normal">ساعة</span>
             </h4>
             <span className="text-[10px] text-slate-400 block">توفير تكلفة قدره ~{Number(roiStats.cost_savings_amount ?? 0).toLocaleString()} ر.س</span>
-          </div>
+          </SpotlightCard>
 
           {/* 4. Attributed Orders */}
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-orange-500/10 to-slate-900 border border-orange-500/30 shadow-xl space-y-2 transition-all hover:border-orange-500/50">
+          <SpotlightCard className="p-5 bg-gradient-to-br from-orange-500/10 to-slate-900 border border-orange-500/30 shadow-xl space-y-2 transition-all hover:border-orange-500/50">
             <div className="flex justify-between items-start">
               <span className="text-xs text-slate-400 font-bold">طلبات الشراء المحولة</span>
               <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[10px] font-black">
@@ -240,67 +258,75 @@ export const DashboardPage: React.FC = () => {
               {roiStats.converted_orders_count ?? 0} <span className="text-xs text-slate-400 font-normal">طلب</span>
             </h4>
             <span className="text-[10px] text-slate-400 block">متوسط قيمة الطلب: {Number(roiStats.average_order_value ?? 0).toLocaleString()} ر.س</span>
-          </div>
+          </SpotlightCard>
         </div>
       </div>
 
       {/* ── 3. Primary & Secondary Operational KPIs (With Clickable Deep Links) ─ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Total Conversations -> /live-chat */}
-        <Link
-          to="/live-chat"
-          className="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 border border-white/5 hover:border-amber-500/30 flex items-center gap-3 transition-all hover:scale-[1.02] group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/20 transition-all">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-400 block">إجمالي المحادثات</span>
-            <span className="text-lg font-black text-white">{primaryKpis.total_conversations ?? 0}</span>
-          </div>
-        </Link>
+        <SpotlightCard className="p-0 bg-slate-900/80 border border-white/5 hover:border-amber-500/30">
+          <Link
+            to="/live-chat"
+            className="p-4 flex items-center gap-3 transition-all hover:scale-[1.02] group w-full h-full"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/20 transition-all">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-400 block">إجمالي المحادثات</span>
+              <span className="text-lg font-black text-white">{primaryKpis.total_conversations ?? 0}</span>
+            </div>
+          </Link>
+        </SpotlightCard>
 
         {/* AI Resolution -> /playground */}
-        <Link
-          to="/playground"
-          className="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 border border-white/5 hover:border-emerald-500/30 flex items-center gap-3 transition-all hover:scale-[1.02] group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500/20 transition-all">
-            <Bot className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-400 block">ردود الذكاء الاصطناعي</span>
-            <span className="text-lg font-black text-white">{primaryKpis.resolution_rate ?? '94.8%'}</span>
-          </div>
-        </Link>
+        <SpotlightCard className="p-0 bg-slate-900/80 border border-white/5 hover:border-emerald-500/30" spotlightColor="rgba(34, 197, 94, 0.15)">
+          <Link
+            to="/playground"
+            className="p-4 flex items-center gap-3 transition-all hover:scale-[1.02] group w-full h-full"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500/20 transition-all">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-400 block">ردود الذكاء الاصطناعي</span>
+              <span className="text-lg font-black text-white">{primaryKpis.resolution_rate ?? '94.8%'}</span>
+            </div>
+          </Link>
+        </SpotlightCard>
 
         {/* Active Customers -> /live-chat?filter=unhandled */}
-        <Link
-          to="/live-chat"
-          className="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 border border-white/5 hover:border-blue-500/30 flex items-center gap-3 transition-all hover:scale-[1.02] group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20 transition-all">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-400 block">العملاء النشطون</span>
-            <span className="text-lg font-black text-white">{primaryKpis.new_inquiries ?? 0}</span>
-          </div>
-        </Link>
+        <SpotlightCard className="p-0 bg-slate-900/80 border border-white/5 hover:border-blue-500/30" spotlightColor="rgba(59, 130, 246, 0.15)">
+          <Link
+            to="/live-chat"
+            className="p-4 flex items-center gap-3 transition-all hover:scale-[1.02] group w-full h-full"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20 transition-all">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-400 block">العملاء النشطون</span>
+              <span className="text-lg font-black text-white">{primaryKpis.new_inquiries ?? 0}</span>
+            </div>
+          </Link>
+        </SpotlightCard>
 
         {/* Response Time -> /bot-settings */}
-        <Link
-          to="/bot-settings"
-          className="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/80 border border-white/5 hover:border-rose-500/30 flex items-center gap-3 transition-all hover:scale-[1.02] group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:bg-rose-500/20 transition-all">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-400 block">متوسط سرعة الرد</span>
-            <span className="text-lg font-black text-white">{primaryKpis.avg_response_time ?? '0.4 ثانية'}</span>
-          </div>
-        </Link>
+        <SpotlightCard className="p-0 bg-slate-900/80 border border-white/5 hover:border-rose-500/30" spotlightColor="rgba(244, 63, 94, 0.15)">
+          <Link
+            to="/bot-settings"
+            className="p-4 flex items-center gap-3 transition-all hover:scale-[1.02] group w-full h-full"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:bg-rose-500/20 transition-all">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-400 block">متوسط سرعة الرد</span>
+              <span className="text-lg font-black text-white">{primaryKpis.avg_response_time ?? '0.4 ثانية'}</span>
+            </div>
+          </Link>
+        </SpotlightCard>
 
         {/* Active Bots -> /bot-settings */}
         <Link

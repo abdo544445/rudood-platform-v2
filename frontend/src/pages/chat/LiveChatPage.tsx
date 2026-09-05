@@ -18,7 +18,11 @@ import {
   PlusCircle,
   X
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '../../services/apiClient';
+import { soundEngine } from '../../services/soundEngine';
+import { socketService } from '../../services/socketService';
+import { StreamingMessage } from '../../components/common/StreamingMessage';
 
 export const LiveChatPage: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -57,25 +61,6 @@ export const LiveChatPage: React.FC = () => {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Synthesize notification sound
-  const playChime = () => {
-    if (!soundEnabled) return;
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.3);
-    } catch (e) {}
-  };
 
   // 1. Fetch Conversations List
   const fetchConversations = async (filter = activeFilter, search = searchQuery) => {
@@ -130,7 +115,30 @@ export const LiveChatPage: React.FC = () => {
   useEffect(() => {
     if (activeConversationId) {
       fetchConversationDetails(activeConversationId);
+      socketService.joinConversation(activeConversationId);
     }
+  }, [activeConversationId]);
+
+  // Real-time Socket.IO incoming message listener
+  useEffect(() => {
+    const unsubMsg = socketService.onNewMessage((msgData) => {
+      if (activeConversationId && msgData.conversation_id === activeConversationId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msgData.id)) return prev;
+          return [...prev, msgData];
+        });
+      }
+      fetchConversations();
+    });
+
+    const unsubUpd = socketService.onConversationUpdated(() => {
+      fetchConversations();
+    });
+
+    return () => {
+      unsubMsg();
+      unsubUpd();
+    };
   }, [activeConversationId]);
 
   useEffect(() => {
@@ -147,15 +155,16 @@ export const LiveChatPage: React.FC = () => {
     setShowCannedMenu(false);
 
     try {
+      soundEngine.playSent();
       const res = await apiClient.post(`/conversations/${activeConversationId}/messages`, {
         content: text,
       });
       if (res.data.success) {
         setMessages((prev) => [...prev, res.data.data]);
-        playChime();
+        soundEngine.playReceived();
       }
     } catch (e) {
-      alert('تعذر إرسال الرسالة');
+      toast.error('تعذر إرسال الرسالة، يرجى المحاولة مرة أخرى');
     }
   };
 
@@ -181,14 +190,16 @@ export const LiveChatPage: React.FC = () => {
     }
 
     try {
+      soundEngine.playSent();
       const res = await apiClient.post(`/conversations/${activeConversationId}/messages`, payload);
       if (res.data.success) {
         setMessages((prev) => [...prev, res.data.data]);
         setInteractiveModalOpen(false);
-        playChime();
+        soundEngine.playSuccess();
+        toast.success('تم إرسال العنصر التفاعلي بنجاح إلى العميل ✓');
       }
     } catch (e) {
-      alert('تعذر إرسال العنصر التفاعلي');
+      toast.error('تعذر إرسال العنصر التفاعلي');
     }
   };
 
@@ -196,17 +207,24 @@ export const LiveChatPage: React.FC = () => {
   const handleToggleTakeover = async () => {
     if (!activeConversationId) return;
     try {
+      soundEngine.playClick();
       const res = await apiClient.post(`/conversations/${activeConversationId}/toggle-bot`);
       if (res.data.success) {
+        const isPaused = res.data.data.is_bot_paused;
         setActiveChat((prev: any) => ({
           ...prev,
-          is_bot_paused: res.data.data.is_bot_paused,
+          is_bot_paused: isPaused,
           status: res.data.data.status,
         }));
         fetchConversations();
+        if (isPaused) {
+          toast.info('تم استلام المحادثة كوكيل بشري وتجميد الرد الآلي للبوت 👤');
+        } else {
+          toast.success('تم استئناف الرد الآلي للمساعد الذكي 🤖');
+        }
       }
     } catch (e) {
-      alert('تعذر تبديل حالة الاستلام');
+      toast.error('تعذر تبديل حالة استلام المحادثة');
     }
   };
 
@@ -214,13 +232,15 @@ export const LiveChatPage: React.FC = () => {
   const handleResolve = async () => {
     if (!activeConversationId) return;
     try {
+      soundEngine.playSuccess();
       const res = await apiClient.post(`/conversations/${activeConversationId}/resolve`);
       if (res.data.success) {
         setActiveChat((prev: any) => ({ ...prev, status: 'resolved', is_bot_paused: false }));
         fetchConversations();
+        toast.success('تم تحديد المحادثة كمكتملة ومحلولة بنجاح ✓');
       }
     } catch (e) {
-      alert('تعذر إنهاء المحادثة');
+      toast.error('تعذر إنهاء المحادثة');
     }
   };
 
@@ -229,14 +249,15 @@ export const LiveChatPage: React.FC = () => {
     if (!activeConversationId) return;
     setIsSavingCrm(true);
     try {
+      soundEngine.playClick();
       const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
       await apiClient.post(`/conversations/${activeConversationId}/crm`, {
         internal_notes: internalNotes,
         tags,
       });
-      alert('تم حفظ بيانات العميل والملاحظات بنجاح ✓');
+      toast.success('تم حفظ بيانات العميل وملاحظات الفريق بنجاح ✓');
     } catch (e) {
-      alert('تعذر حفظ بيانات العميل');
+      toast.error('تعذر حفظ بيانات العميل في CRM');
     } finally {
       setIsSavingCrm(false);
     }
@@ -266,6 +287,8 @@ export const LiveChatPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    soundEngine.playSuccess();
+    toast.success('تم تصدير ملف سجل المحادثات بنجاح بصيغة CSV ✓');
   };
 
   const handleInputChange = (val: string) => {
@@ -276,6 +299,7 @@ export const LiveChatPage: React.FC = () => {
   const applyCannedReply = (content: string) => {
     setInputMessage(content);
     setShowCannedMenu(false);
+    toast.info('تم تطبيق الرد السريع الجاهز');
   };
 
   return (
@@ -291,8 +315,12 @@ export const LiveChatPage: React.FC = () => {
             </h3>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+                onClick={() => {
+                  const muted = soundEngine.toggleMute();
+                  setSoundEnabled(!muted);
+                  toast.info(muted ? 'تم كتم التنبيهات الصوتية 🔇' : 'تم تفعيل التنبيهات الصوتية 🔊');
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors cursor-pointer"
                 title={soundEnabled ? 'كتم التنبيهات الصوتية' : 'تفعيل التنبيهات'}
               >
                 {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -415,6 +443,10 @@ export const LiveChatPage: React.FC = () => {
                     <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">
                       {customer?.platform || 'WhatsApp'}
                     </span>
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-bold border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>اتصال فوري (Socket.IO)</span>
+                    </span>
                   </h3>
                   <span className="text-[10px] text-slate-400">{customer?.phone || customer?.email}</span>
                 </div>
@@ -486,7 +518,11 @@ export const LiveChatPage: React.FC = () => {
                         />
                       )}
 
-                      <p className="whitespace-pre-line">{msg.content}</p>
+                      {isBot ? (
+                        <StreamingMessage content={msg.content} isStreaming={false} />
+                      ) : (
+                        <p className="whitespace-pre-line">{msg.content}</p>
+                      )}
 
                       {/* Interactive Buttons Preview */}
                       {msg.interactive_type === 'button' && msg.interactive_data?.buttons && (

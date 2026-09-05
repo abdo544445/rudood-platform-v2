@@ -10,14 +10,20 @@ import {
   Sparkles, 
   Share2, 
   Eye, 
-  EyeOff
+  EyeOff,
+  Smartphone
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { apiClient } from '../../services/apiClient';
 import { useAuthStore } from '../../store/useAuthStore';
+import { soundEngine } from '../../services/soundEngine';
+import { PhoneSimulator } from '../../components/common/PhoneSimulator';
+import { TokenMetrics } from '../../components/common/TokenMetrics';
 
 export const BotSettingsPage: React.FC = () => {
   const { bot, fetchUser } = useAuthStore();
+  const [showSimulator, setShowSimulator] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     bot_tone: 'friendly',
@@ -57,20 +63,27 @@ export const BotSettingsPage: React.FC = () => {
 
   const handleToggleActive = async () => {
     try {
+      soundEngine.playClick();
       const nextState = !formData.is_active;
       setFormData({ ...formData, is_active: nextState });
       const res = await apiClient.post('/bot/toggle', { is_active: nextState });
       if (res.data.success) {
         fetchUser();
+        if (nextState) {
+          toast.success('تم تفعيل المساعد الذكي بنجاح 🟢');
+        } else {
+          toast.info('تم إيقاف المساعد الذكي مؤقتاً ⏸');
+        }
       }
     } catch (e) {
-      alert('تعذر تبديل حالة تشغيل البوت');
+      toast.error('تعذر تبديل حالة تشغيل البوت');
       setFormData({ ...formData, is_active: !formData.is_active });
     }
   };
 
   const handleFetchModels = async () => {
     setIsFetchingModels(true);
+    soundEngine.playClick();
     try {
       const res = await apiClient.get('/bot/models', {
         params: { provider: formData.ai_provider },
@@ -80,6 +93,7 @@ export const BotSettingsPage: React.FC = () => {
         if (res.data.data.length > 0) {
           setFormData({ ...formData, model_type: res.data.data[0] });
         }
+        toast.success(`تم جلب ${res.data.data.length} نموذج متاح بنجاح`);
       }
     } catch (e) {
       // Fallback sensible models
@@ -92,6 +106,7 @@ export const BotSettingsPage: React.FC = () => {
       } else {
         setAvailableModels(['custom-model-v1', 'mistral-7b', 'llama-3-8b']);
       }
+      toast.info('تم تحميل قائمة النماذج الموصى بها');
     } finally {
       setIsFetchingModels(false);
     }
@@ -101,13 +116,15 @@ export const BotSettingsPage: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
+      soundEngine.playClick();
       const res = await apiClient.put('/bot/settings', formData);
       if (res.data.success) {
-        alert('تم حفظ وتحديث كافة إعدادات البوت بنجاح ✓');
+        soundEngine.playSuccess();
+        toast.success('تم حفظ وتحديث كافة إعدادات وسياسات البوت بنجاح ✓');
         fetchUser();
       }
     } catch (e) {
-      alert('تعذر حفظ الإعدادات');
+      toast.error('تعذر حفظ إعدادات البوت، يرجى مراجعة البيانات');
     } finally {
       setIsSaving(false);
     }
@@ -118,25 +135,27 @@ export const BotSettingsPage: React.FC = () => {
     if (!apiKey.trim()) return;
     setIsSavingKey(true);
     try {
+      soundEngine.playClick();
       const res = await apiClient.post('/bot/api-key', {
         api_key: apiKey,
         ai_provider: formData.ai_provider,
         model_type: formData.model_type,
       });
       if (res.data.success) {
-        alert('تم تشفير وحفظ مفتاح الـ API بنجاح في قاعدة البيانات ✓');
+        soundEngine.playSuccess();
+        toast.success('تم تشفير وحفظ مفتاح الـ API بنجاح في قاعدة البيانات (AES-256) ✓');
         setApiKey('');
         fetchUser();
       }
     } catch (e) {
-      alert('تعذر حفظ مفتاح الـ API');
+      toast.error('تعذر حفظ مفتاح الـ API');
     } finally {
       setIsSavingKey(false);
     }
   };
 
   return (
-    <div className="space-y-8 max-w-5xl font-['Cairo',sans-serif] pb-12">
+    <div className="space-y-8 max-w-7xl font-['Cairo',sans-serif] pb-12">
       
       {/* ── Page Header & Instant Bot Toggle ─────────────────────────────── */}
       <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 backdrop-blur-xl shadow-xl">
@@ -151,44 +170,63 @@ export const BotSettingsPage: React.FC = () => {
             <Bot className="w-6 h-6 text-amber-400" />
             <span>إعدادات وتخصيص المساعد الذكي</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">التحكم بسياسات الرد ونبرة المحادثة ومزود الذكاء الاصطناعي</p>
+          <p className="text-xs text-slate-400 mt-1">التحكم بسياسات الرد ونبرة المحادثة ومزود الذكاء الاصطناعي مع معاينة حية</p>
         </div>
 
-        {/* Master Power Switch */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-2.5 px-4 rounded-2xl border border-white/10 shadow-inner">
-          <div className="text-right">
-            <div className="text-xs font-black text-white">حالة البوت</div>
-            <div className="text-[10px] text-slate-400">
-              {formData.is_active ? (
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> مفعّل ونشط للعملاء
-                </span>
-              ) : (
-                <span className="text-rose-400 font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> إيقاف مؤقت (معطّل)
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Simulator Toggle Button */}
           <button
             type="button"
-            onClick={handleToggleActive}
-            className={`p-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs ${
-              formData.is_active
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+            onClick={() => {
+              soundEngine.playClick();
+              setShowSimulator(!showSimulator);
+            }}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
+              showSimulator
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/10'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
             }`}
           >
-            <Power className="w-4 h-4" />
-            <span>{formData.is_active ? 'تعطيل البوت' : 'تفعيل البوت'}</span>
+            <Smartphone className="w-4 h-4 text-amber-400" />
+            <span>{showSimulator ? 'إخفاء شاشة الهاتف ✕' : 'معاينة حية على الهاتف 📱'}</span>
           </button>
+
+          {/* Master Power Switch */}
+          <div className="flex items-center gap-3 bg-slate-950/80 p-2.5 px-4 rounded-2xl border border-white/10 shadow-inner">
+            <div className="text-right">
+              <div className="text-xs font-black text-white">حالة البوت</div>
+              <div className="text-[10px] text-slate-400">
+                {formData.is_active ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> مفعّل ونشط للعملاء
+                  </span>
+                ) : (
+                  <span className="text-rose-400 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> إيقاف مؤقت (معطّل)
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleActive}
+              className={`p-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs cursor-pointer ${
+                formData.is_active
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+              }`}
+            >
+              <Power className="w-4 h-4" />
+              <span>{formData.is_active ? 'تعطيل البوت' : 'تفعيل البوت'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 ${showSimulator ? 'xl:grid-cols-12' : 'lg:grid-cols-3'} gap-8`}>
         
-        {/* ── Left 2 Cols: Main Bot Persona & Behavior Form ──────────────── */}
-        <form onSubmit={handleSaveSettings} className="lg:col-span-2 p-8 rounded-3xl bg-slate-900/80 border border-white/5 space-y-6 shadow-xl backdrop-blur-xl">
+        {/* ── Left Cols: Main Bot Persona & Behavior Form ──────────────── */}
+        <form onSubmit={handleSaveSettings} className={`${showSimulator ? 'xl:col-span-5' : 'lg:col-span-2'} p-8 rounded-3xl bg-slate-900/80 border border-white/5 space-y-6 shadow-xl backdrop-blur-xl`}>
           <h3 className="text-base font-black text-white flex items-center gap-2 pb-4 border-b border-white/5">
             <Sliders className="w-5 h-5 text-amber-400" />
             <span>تخصيص سلوك وهوية البوت</span>
@@ -287,8 +325,16 @@ export const BotSettingsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Token Footprint Metrics Live Calculation */}
+          <TokenMetrics
+            promptText={formData.system_prompt}
+            replyText={formData.welcome_message}
+            provider={formData.ai_provider}
+            model={formData.model_type}
+          />
+
           <div className="flex justify-end pt-2">
-            <button type="submit" disabled={isSaving} className="px-6 py-3 rounded-xl gold-btn text-xs font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20">
+            <button type="submit" disabled={isSaving} className="px-6 py-3 rounded-xl gold-btn text-xs font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer">
               <Save className="w-4 h-4" />
               <span>{isSaving ? 'جاري الحفظ...' : 'حفظ إعدادات البوت ✓'}</span>
             </button>
@@ -296,7 +342,7 @@ export const BotSettingsPage: React.FC = () => {
         </form>
 
         {/* ── Right Col: AI Provider, Model Selection & Encrypted API Key ── */}
-        <div className="space-y-6">
+        <div className={`${showSimulator ? 'xl:col-span-4' : 'lg:col-span-1'} space-y-6`}>
           
           {/* AI Provider & Model Card */}
           <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 space-y-4 shadow-xl backdrop-blur-xl">
@@ -456,6 +502,21 @@ export const BotSettingsPage: React.FC = () => {
           </div>
 
         </div>
+
+        {/* ── 3rd Col: Live Phone Simulator ── */}
+        {showSimulator && (
+          <div className="xl:col-span-3 flex flex-col items-center sticky top-24 self-start">
+            <div className="w-full text-center mb-3">
+              <span className="text-xs font-bold text-amber-300">📱 المعاينة التفاعلية المباشرة</span>
+              <p className="text-[10px] text-slate-400">تحديث فوري لاسم المساعد والنبرة والرسائل</p>
+            </div>
+            <PhoneSimulator
+              botName={formData.name || 'مساعد المتجر الذكي'}
+              botTone={formData.bot_tone}
+              welcomeMessage={formData.welcome_message}
+            />
+          </div>
+        )}
 
       </div>
 

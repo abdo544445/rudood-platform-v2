@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { socketService } from './services/socketService';
 
 // Public Marketing Pages
 import { HomePage } from './pages/public/HomePage';
@@ -28,8 +30,29 @@ import { ChannelsPage } from './pages/channels/ChannelsPage';
 import { AdminPage } from './pages/admin/AdminPage';
 
 export const App: React.FC = () => {
+  useEffect(() => {
+    socketService.init();
+  }, []);
+
   return (
     <BrowserRouter>
+      {/* Luxury Dark Toaster Provider */}
+      <Toaster 
+        position="top-left" 
+        richColors 
+        theme="dark" 
+        dir="rtl" 
+        toastOptions={{
+          style: {
+            backgroundColor: '#0f172a',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            color: '#f8fafc',
+            fontFamily: 'Cairo, sans-serif',
+            fontSize: '12px',
+          },
+        }}
+      />
+
       <Routes>
         {/* ── Public Website Routes ────────────────────────────────────────── */}
         <Route path="/" element={<HomePage />} />

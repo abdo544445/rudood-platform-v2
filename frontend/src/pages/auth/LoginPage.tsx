@@ -35,11 +35,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillDemo = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('password123');
-  };
-
   return (
     <div className="min-h-screen bg-[#080d19] flex items-center justify-center p-4 relative overflow-hidden font-['Cairo',sans-serif]">
       {/* Ambient background glow */}
@@ -124,48 +119,6 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Demo Credentials Quick Fill */}
-          <div className="mt-6 pt-6 border-t border-slate-800 space-y-2">
-            <p className="text-[11px] text-slate-400 text-center font-medium mb-3">حسابات تجريبية مخصصة لكل قطاع (كلمة المرور: password123):</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => fillDemo('admin@rudood.com')}
-                className="px-2.5 py-2 rounded-xl bg-slate-950/60 border border-amber-500/20 text-amber-300 text-[11px] font-bold hover:bg-amber-500/10 transition-colors text-center"
-              >
-                👑 الإدارة العليا (Admin)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo('demo.ecommerce@rudood.com')}
-                className="px-2.5 py-2 rounded-xl bg-slate-950/60 border border-purple-500/30 text-purple-300 text-[11px] font-bold hover:bg-purple-500/10 transition-colors text-center"
-              >
-                🛍️ متجر عطور وساعات
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo('demo.restaurant@rudood.com')}
-                className="px-2.5 py-2 rounded-xl bg-slate-950/60 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold hover:bg-emerald-500/10 transition-colors text-center"
-              >
-                🍽️ مطعم وكافيه راقي
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo('demo.clinic@rudood.com')}
-                className="px-2.5 py-2 rounded-xl bg-slate-950/60 border border-sky-500/30 text-sky-300 text-[11px] font-bold hover:bg-sky-500/10 transition-colors text-center"
-              >
-                🩺 مجمع عيادات وأسنان
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemo('demo.realestate@rudood.com')}
-                className="col-span-2 px-2.5 py-2 rounded-xl bg-slate-950/60 border border-amber-500/30 text-amber-200 text-[11px] font-bold hover:bg-amber-500/10 transition-colors text-center"
-              >
-                🏢 شركة عقارات وتطوير (صروح نجد)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Register Link */}
