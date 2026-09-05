@@ -1,0 +1,113 @@
+services:
+  caddy:
+    image: caddy:alpine
+    container_name: rudood_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - websocket
+    networks:
+      - rudood_network
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rudood_app
+    restart: always
+    expose:
+      - "80"
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: production
+      APP_KEY: "${APP_KEY}"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: rudood_db
+      DB_USERNAME: rudood_user
+      DB_PASSWORD: rudood_secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: database
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/storage:/var/www/html/storage
+    networks:
+      - rudood_network
+
+  websocket:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rudood_websocket
+    restart: always
+    command: node /var/www/html/websocket/server.js
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORS_ORIGIN: "*"
+    depends_on:
+      - redis
+    networks:
+      - rudood_network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rudood_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-rudood_db}
+      POSTGRES_USER: ${DB_USERNAME:-rudood_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rudood_secret}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-rudood_user} -d $${POSTGRES_DB:-rudood_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rudood_network
+
+  redis:
+    image: redis:alpine
+    container_name: rudood_redis
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rudood_network
+
+networks:
+  rudood_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

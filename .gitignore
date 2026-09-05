@@ -1,0 +1,38 @@
+# Environment & Sensitive Credentials
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.env
+DIGITALOCEAN_GUIDE.md
+VPS_*.md
+credentials.md
+
+# Dependencies (install via composer install / npm install)
+backend/vendor/
+backend/node_modules/
+backend/websocket/node_modules/
+node_modules/
+
+# Redis dumps
+dump.rdb
+backend/dump.rdb
+
+# Test caches & IDE files
+backend/.phpunit.result.cache
+.phpunit.result.cache
+
+
+RUDOOD_PLATFORM_BEGINNER_STUDENT_MASTER_GUIDE.html
+RUDOOD_PLATFORM_BEGINNER_STUDENT_MASTER_GUIDE.md
+RUDOOD_PLATFORM_BEGINNER_STUDENT_MASTER_GUIDE.pdf
+RUDOOD_PLATFORM_COMPLETE_ARCHITECTURE_OUTLINE.md
+RUDOOD_PLATFORM_COMPLETE_ARCHITECTURE_OUTLINE.pdf
+RUDOOD_PLATFORM_COMPLETE_ARCHITECTURE_OUTLINE.html
+RUDOOD_PLATFORM_COMPLETE_CODE_AND_SYNTAX_GUIDE.md
+RUDOOD_PLATFORM_COMPLETE_CODE_AND_SYNTAX_GUIDE.pdf
+RUDOOD_PLATFORM_COMPLETE_CODE_AND_SYNTAX_GUIDE.html
+DECOUPLED_REACT_FRONTEND_IMPLEMENTATION_PLAN.md
+DASHBOARD_AND_PLATFORM_FEATURES_PARITY_PLAN.md

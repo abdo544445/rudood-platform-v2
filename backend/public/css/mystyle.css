@@ -1,0 +1,605 @@
+:root {
+  --gold-primary: #d4af37;
+  --gold-gradient: linear-gradient(135deg, #f3d082 0%, #c49346 100%);
+  --text-gold: #e2b767;
+  --card-border: rgba(255, 255, 255, 0.7);
+  --font-main: 'Cairo', system-ui, -apple-system, sans-serif;
+}
+
+html {
+  font-size: 14.2px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 1200px) {
+  body {
+    zoom: 0.94;
+  }
+}
+
+::selection {
+  background: #d4af37 !important;
+  color: #0b0f19 !important;
+}
+::-moz-selection {
+  background: #d4af37 !important;
+  color: #0b0f19 !important;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: #0b0f19;
+  
+  /* Background image with fixed attachment */
+  background-image: url('../images/log22.png'); 
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #ffffff;
+  overflow-x: hidden;
+  direction: rtl;
+}
+
+/* Ambient Particle Canvas Global */
+#ambientCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main-page-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   High-Contrast Status Badges for Tables & Contact Inquiries
+   ───────────────────────────────────────────────────────────── */
+.badge-status-new,
+.btn.badge-status-new,
+button.badge-status-new {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border: 1px solid #ef4444 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.badge-status-new:hover,
+.badge-status-new:focus,
+.btn.badge-status-new:hover,
+.btn.badge-status-new:focus {
+  background-color: #b91c1c !important;
+  color: #ffffff !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.badge-status-in_progress,
+.btn.badge-status-in_progress,
+button.badge-status-in_progress {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+  border: 1px solid #f59e0b !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.badge-status-in_progress:hover,
+.badge-status-in_progress:focus,
+.btn.badge-status-in_progress:hover,
+.btn.badge-status-in_progress:focus {
+  background-color: #b45309 !important;
+  color: #ffffff !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.badge-status-resolved,
+.btn.badge-status-resolved,
+button.badge-status-resolved {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border: 1px solid #22c55e !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.badge-status-resolved:hover,
+.badge-status-resolved:focus,
+.btn.badge-status-resolved:hover,
+.btn.badge-status-resolved:focus {
+  background-color: #15803d !important;
+  color: #ffffff !important;
+  border-color: #4ade80 !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.status-toggle-btn {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* 2. الهيدر وشعار الصورة جهة اليسار */
+.navbar-rodood {
+  background-color: rgba(8, 13, 25, 0.75);
+  backdrop-filter: blur(12px);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.nav-logo-img {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.nav-link {
+  color: #a0aec0 !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.8rem !important;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-gold) !important;
+}
+
+.nav-link.active {
+  border-bottom: 2px solid var(--gold-primary);
+}
+
+.nav-login-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-outline-gold {
+  border: 1px solid var(--gold-primary);
+  color: #ffffff;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 18px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-outline-gold:hover {
+  background: var(--gold-gradient);
+  color: #000000;
+}
+
+.dropdown-menu {
+  background-color: #0d1527;
+  border: 1px solid var(--card-border);
+}
+
+.dropdown-item {
+  color: #a0aec0;
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(212, 163, 89, 0.1);
+  color: var(--text-gold);
+}
+
+/* 3. قسم الهيدر الرئيسي وتنسيق الكلام في الجهة اليسرى */
+.hero-section {
+  min-height: calc(100vh - 180px);
+  display: flex;
+  align-items: center;
+  padding: 60px 0 30px 0;
+  padding-right: 100px; 
+  background: transparent;
+}
+.hero-section {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    padding: 60px 0 30px 0;
+    padding-right: 100px;
+    background: transparent;
+}
+
+.hero-content-wrapper {
+    margin-right: auto !important;
+    margin-left: 3rem !important;
+}
+
+
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.text-gold-gradient {
+  background: var(--gold-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  color: #cbd5e1;
+  font-size: 1.25rem;
+}
+
+/* البطاقة الشفافة الوصفية */
+.rodood-glass-card {
+  background: rgba(8, 13, 25, 0.5);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  max-width: 540px;
+  backdrop-filter: blur(8px);
+}
+
+.rodood-glass-text {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* الأزرار الرئيسية */
+.btn-gold-action {
+  background: var(--gold-gradient);
+  color: #0d1322;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 12px 38px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(212, 163, 89, 0.25);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+/* ==========================================
+   تنسيقات محاكي الشات والباقات الزجاجية (الرد الآلي)
+   ========================================== */
+
+/* كارت المحادثة الزجاجي */
+.chat-sim-card {
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.25) !important;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* فقاعات رسائل العميل (الرمادية الشفافة) */
+.chat-bubble-incoming {
+    background: rgba(80, 72, 72, 0.08) !important;
+    color: #18191a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 14px 14px 2px 14px;
+}
+
+/* فقاعات رسائل البوت (الذهبية) */
+.chat-bubble-outgoing {
+    background: var(--gold-gradient, linear-gradient(135deg, #d4af37 0%, #aa820a 100%)) !important;
+    color: #0d1322 !important;
+    font-weight: 600;
+    border-radius: 14px 14px 14px 2px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+/* نصوص التفاصيل الرمادية الشفافة لتسهيل القراءة */
+.text-subtle {
+    color: #94a3b8 !important;
+}
+
+.btn-gold-action:hover {
+  transform: translateY(-2px);
+  color: #000000;
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  padding: 12px 32px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* 4. الشريط السفلي للمميزات */
+.features-bar {
+  background: rgba(8, 13, 25, 0.8);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--card-border);
+  padding: 22px 0;
+}
+
+.feature-icon {
+  font-size: 1.6rem;
+  color: var(--text-gold);
+}
+
+.feature-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+}
+
+.feature-desc {
+  font-size: 0.75rem;
+  color: #718096;
+  margin: 0;
+}
+
+
+
+/* ==================== تنسيقات صفحة الأسعار والتعريفة ==================== */
+
+/* كارت الباقة الأساسي */
+.pricing-card {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(226, 183, 103, 0.4);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* الباقة المميزة (الاحترافية) */
+.pricing-card.featured {
+  background: rgba(20, 30, 55, 0.85);
+  border: 2px solid var(--gold-primary) !important;
+  box-shadow: 0 10px 30px rgba(212, 163, 89, 0.15);
+}
+
+/* شارة الباقة الأكثر طلباً */
+.popular-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold-gradient);
+  color: #080d19;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 4px 16px;
+  border-radius: 50px;
+  text-transform: uppercase;
+}
+
+/* أزرار وتفاصيل الباقة الذهبية */
+.btn-gold {
+  background: var(--gold-gradient);
+  color: #080d19;
+  border: none;
+}
+
+.btn-gold:hover {
+  opacity: 0.9;
+  color: #000;
+}
+
+.shadow-gold {
+  box-shadow: 0 4px 15px rgba(243, 208, 130, 0.3);
+}
+
+.bg-gold-subtle {
+  background-color: rgba(212, 163, 89, 0.1) !important;
+}
+
+.text-gold {
+  color: var(--text-gold) !important;
+}
+
+/* تنسيق الأسئلة الشائعة (Accordion) */
+.custom-accordion .accordion-button {
+  box-shadow: none !important;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-gold) !important;
+}
+
+.custom-accordion .accordion-button::after {
+  filter: invert(1);
+}
+/* إصلاح خلفية ونص الأسئلة الشائعة */
+.custom-accordion .accordion-item {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(10px);
+}
+
+.custom-accordion .accordion-button {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+  background-color: rgba(212, 163, 89, 0.15) !important;
+  color: var(--text-gold, #d4af37) !important;
+}
+
+/* تغيير لون سهم الأكورديون إلى الأبيض/الذهبي */
+.custom-accordion .accordion-button::after {
+  filter: brightness(0) invert(1);
+}
+
+/* Styling for Blog Page */
+.text-gold {
+    color: #dfb15b !important; /* اللون الذهبي الخاص بالمنصة */
+}
+
+.btn-gold {
+    background-color: #dfb15b;
+    border-color: #dfb15b;
+}
+
+.btn-gold:hover {
+    background-color: #c99c46;
+    border-color: #c99c46;
+}
+
+.btn-outline-gold {
+    color: #dfb15b;
+    border-color: #dfb15b;
+}
+
+.btn-outline-gold:hover {
+    background-color: #dfb15b;
+    color: #121212 !important;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(223, 177, 91, 0.4) !important;
+}
+
+.bg-gold-subtle {
+    background-color: rgba(223, 177, 91, 0.1);
+}
+
+.fs-7 {
+    font-size: 0.875rem;
+}
+/* ── Phone Number LTR Fix (RTL layout reversal prevention) ──────────────────
+   Phone numbers with + prefix get reversed in dir=rtl context.
+   These classes ensure phone numbers always render left-to-right.
+   Use class="phone-num" or dir="ltr" on any phone number element. */
+.phone-num,
+a[href^="tel:"],
+a[href^="https://wa.me/"],
+[data-phone] {
+    direction: ltr !important;
+    unicode-bidi: embed;
+    display: inline-block;
+}
+
+/* Global rule: any span/div inside RTL page that contains only digits and + */
+.ltr-text {
+    direction: ltr !important;
+    unicode-bidi: embed;
+    display: inline-block;
+}
+
+/* ─── High-Contrast Dark Luxury Badges (Fixes solid colors & invisible text) ── */
+.badge-custom-gold, .badge-roi-gold {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.12)) !important;
+    color: #fde047 !important;
+    border: 1px solid rgba(212, 175, 55, 0.6) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.badge-custom-success, .badge-roi-success {
+    background: rgba(34, 197, 94, 0.18) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(34, 197, 94, 0.5) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.badge-custom-info, .badge-roi-info {
+    background: rgba(14, 165, 233, 0.18) !important;
+    color: #7dd3fc !important;
+    border: 1px solid rgba(14, 165, 233, 0.5) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.badge-custom-warning, .badge-roi-warning {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fde047 !important;
+    border: 1px solid rgba(245, 158, 11, 0.5) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.badge-custom-danger, .badge-roi-danger {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Global Mobile & Tablet Responsiveness System ──────────────────────── */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background: rgba(11, 15, 25, 0.98);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-top: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  }
+
+  .navbar-nav .nav-link {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .navbar-nav .nav-link.active {
+    border-bottom: 1px solid var(--gold-primary) !important;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .hero-mockup-window {
+    transform: none !important;
+  }
+
+  .card-custom, .pricing-card, .stat-box, .glass-card {
+    border-radius: 14px !important;
+  }
+
+  /* Smooth Touch-Friendly Table Containers */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  /* Form Controls on Mobile */
+  .form-control, .form-select, .btn {
+    min-height: 42px;
+  }
+}
+
+

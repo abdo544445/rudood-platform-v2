@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --gold: #d4af37;
+    --gold-primary: #d4a359;
+    --gold-gradient: linear-gradient(135deg, #f3d082 0%, #c49346 100%);
+    --gold-dark: #aa820a;
+    --gold-soft: rgba(212, 175, 55, 0.12);
+    --bg-dark: #080d19;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --card-border: rgba(212, 175, 55, 0.2);
+    --text-main: #ffffff;
+    --text-gold: #e2b767;
+  }
+
+  body {
+    background-color: #080d19;
+    background-image: 
+      radial-gradient(ellipse at 50% -20%, rgba(212, 175, 55, 0.15), transparent 70%),
+      linear-gradient(180deg, rgba(8, 13, 25, 0.85) 0%, rgba(8, 13, 25, 0.95) 100%),
+      url('/images/log22.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #ffffff;
+    font-family: 'Cairo', sans-serif;
+    letter-spacing: -0.1px;
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  ::selection {
+    background: #d4af37 !important;
+    color: #080d19 !important;
+  }
+}
+
+/* Glassmorphism Cards */
+.bg-glass {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+}
+
+.bg-glass-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 13, 25, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(212, 175, 55, 0.08);
+}
+
+.rodood-glass-card {
+  background: rgba(8, 13, 25, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 16px;
+  padding: 20px 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Gold Gradient Typography */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff7d6 0%, #d4af37 40%, #f3d082 70%, #aa820a 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShine 4s linear infinite;
+  display: inline-block;
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.35));
+}
+
+@keyframes goldShine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Buttons */
+.gold-btn {
+  background: linear-gradient(135deg, #f3d082 0%, #d4af37 50%, #c49346 100%);
+  color: #080d19;
+  font-weight: 800;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+}
+
+.gold-btn:hover {
+  background: linear-gradient(135deg, #fff2cc 0%, #e5c14e 50%, #d4af37 100%);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-outline-gold {
+  border: 1px solid var(--gold);
+  color: #ffffff;
+  border-radius: 12px;
+  font-weight: 700;
+  transition: all 0.25s ease;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.btn-outline-gold:hover {
+  background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+  color: #080d19;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(8, 13, 25, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.6);
+}

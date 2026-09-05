@@ -1,0 +1,7 @@
+.env
+.env.*
+.env.backup
+.env.production
+.env.bak
+!.env.example
+
