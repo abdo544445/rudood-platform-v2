@@ -1,24 +1,26 @@
 # 📚 Rudood AI Platform — Comprehensive Project Documentation
 
-> **Version:** 2.0 Enterprise  
-> **Framework:** Laravel 11.x (PHP 8.4 / 8.2)  
+> **Version:** 2.0 Enterprise Decoupled SPA Architecture  
+> **Frontend:** React 19 (`v19.0.0`) + TypeScript 5.7 + Vite 6  
+> **Backend API:** Laravel 11.x (PHP 8.4 / 8.2) REST API  
 > **Database:** PostgreSQL 16 with `pgvector` & SQLite  
-> **Design Language:** Modern Dark Luxury & Gold Glassmorphism (Bootstrap 5.3 RTL)  
+> **Design Language:** Modern Dark Luxury & Gold Glassmorphism (Vanilla CSS Design System & Cairo Font)  
+> **Test Suite:** 118 Automated Tests (100% Pass Rate)  
 
 ---
 
 ## 📑 Table of Contents
 
 1. [Executive Summary & Value Proposition](#1-executive-summary--value-proposition)
-2. [High-Level System Architecture](#2-high-level-system-architecture)
-3. [Technology Stack](#3-technology-stack)
+2. [High-Level Decoupled Architecture](#2-high-level-system-architecture)
+3. [Technology Stack (Frontend & Backend)](#3-technology-stack)
 4. [Complete Feature Breakdown](#4-complete-feature-breakdown)
    - [4.1 Public Portal & Interactive Live Demo](#41-public-portal--interactive-live-demo)
    - [4.2 Merchant Store Dashboard & Live Chat Inbox](#42-merchant-store-dashboard--live-chat-inbox)
    - [4.3 Omni-Channel Management Hub (4 Channels)](#43-omni-channel-management-hub-4-channels)
    - [4.4 AI Engine, Semantic RAG & Auto-Rules](#44-ai-engine-semantic-rag--auto-rules)
    - [4.5 AI Playground & Prompt Workbench](#45-ai-playground--prompt-workbench)
-   - [4.6 Super Admin Command Center & Audit Trail](#46-super-admin-command-center--audit-trail)
+   - [4.6 Super Admin 8-Module Command Center & Audit Trail](#46-super-admin-command-center--audit-trail)
    - [4.7 Contact Us Inquiries Management System](#47-contact-us-inquiries-management-system)
 5. [Database Architecture & Schema](#5-database-architecture--schema)
 6. [Webhooks & Real-Time Ingestion](#6-webhooks--real-time-ingestion)
