@@ -80,9 +80,18 @@ export const App: React.FC = () => {
             {/* Super Admin Protected Route */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
             </Route>
           </Route>
         </Route>
+
+        {/* ── Legacy Route Aliases & Redirects ─────────────────────────────── */}
+        <Route path="/ai-manage" element={<Navigate to="/knowledge-base" replace />} />
+        <Route path="/settings" element={<Navigate to="/bot-settings" replace />} />
+        <Route path="/try" element={<Navigate to="/contact" replace />} />
+        <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+        <Route path="/chat" element={<Navigate to="/live-chat" replace />} />
+        <Route path="/ai" element={<Navigate to="/playground" replace />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
