@@ -27,6 +27,32 @@ Route::prefix('v1')->group(function () {
     });
     Route::post('/demo/simulate', [\App\Http\Controllers\Api\DemoSimulationController::class, 'simulate']);
 
+    // ── Public Blog Articles Endpoints ─────────────────────────────────────
+    Route::get('/articles', function () {
+        $articles = \App\Models\Article::published()
+            ->latest('published_at')
+            ->get();
+        return response()->json([
+            'success' => true,
+            'data'    => $articles,
+        ]);
+    });
+
+    Route::get('/articles/{slug}', function ($slug) {
+        $article = \App\Models\Article::published()
+            ->where('slug', $slug)
+            ->first();
+
+        if (!$article) {
+            return response()->json(['success' => false, 'message' => 'المقال غير موجود'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $article,
+        ]);
+    });
+
     // ── Protected Endpoints (Requires Sanctum Bearer Token) ─────────────────
     Route::middleware(['auth:sanctum'])->group(function () {
 
