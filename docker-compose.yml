@@ -17,6 +17,7 @@ services:
       - rudood_network
 
   app:
+    image: rudood_app:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -50,9 +51,7 @@ services:
       - rudood_network
 
   websocket:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: rudood_app:latest
     container_name: rudood_websocket
     restart: always
     command: node /var/www/html/websocket/server.js
@@ -80,7 +79,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-rudood_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-rudood_secret}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
