@@ -46,6 +46,10 @@
 ### 2.1 شجرة التوجيه وحماية المسارات (`App.tsx` & `ProtectedRoute.tsx`):
 يتم تأمين التطبيق عبر مكون الحماية النظيف `ProtectedRoute` الذي يتحقق من حالة تسجيل الدخول وصلاحيات المستخدم:
 
+</div>
+
+<div dir="ltr">
+
 ```typescript
 // frontend/src/components/common/ProtectedRoute.tsx
 import React from 'react';
@@ -72,10 +76,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 };
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### 2.2 إدارة الحالة العامة ومصادقة المستخدم (`useAuthStore.ts`):
 تستخدم المنصة مكتبة **Zustand** الخفيفة مع التخزين المحلي التلقائي:
+
+</div>
+
+<div dir="ltr">
 
 ```typescript
 // frontend/src/store/useAuthStore.ts
@@ -115,10 +127,18 @@ export const useAuthStore = create<AuthState>()(
 );
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### 2.3 عميل الاتصال واعتراض التوكنز (`apiClient.ts`):
-يتم حقن التوكن في جميع الترويسات الصادرة تلقائياً:
+يتم حقن التوكن في جميع الترويسات الصادرة تلقائياً مع معالجة حماية انتهاء الجلسة 401:
+
+</div>
+
+<div dir="ltr">
 
 ```typescript
 // frontend/src/services/apiClient.ts
@@ -153,13 +173,21 @@ apiClient.interceptors.response.use(
 );
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### 2.4 كود جناح الإدارة العليا ذو الـ 8 تبويبات (`AdminPage.tsx`):
 يحتوي على كافة الوحدات الإدارية الموحدة في شاشة واحدة:
 
+</div>
+
+<div dir="ltr">
+
 ```typescript
-// frontend/src/pages/admin/AdminPage.tsx (مقتطف معالجة استعلامات SQL وانتحال المتجر)
+// frontend/src/pages/admin/AdminPage.tsx (SQL Terminal & Impersonation Snippet)
 const handleRunSql = async () => {
   if (!sqlQuery.trim()) return;
   setSqlLoading(true);
@@ -185,6 +213,10 @@ const handleImpersonate = async (workspaceId: number) => {
 };
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 # 3. 🐘 تشريح كود الواجهة الخلفية Laravel 11 REST API
@@ -192,10 +224,14 @@ const handleImpersonate = async (workspaceId: number) => {
 ### 3.1 خريطة مسارات الـ API المحمية (`routes/api.php`):
 تنظيم المسارات تحت البادئة `/api/v1` ومجموعات الحماية:
 
+</div>
+
+<div dir="ltr">
+
 ```php
 // backend/routes/api.php
 Route::prefix('v1')->group(function () {
-    // المسارات العامة والمصادقة
+    // Public & Auth Endpoints
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::get('/public/stats', [PublicController::class, 'stats']);
@@ -203,7 +239,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/blog/articles/{slug}', [BlogController::class, 'show']);
     Route::post('/contact', [ContactController::class, 'store']);
 
-    // مسارات لوحة التاجر المحمية
+    // Protected Store Owner Endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
         Route::get('/conversations', [ChatController::class, 'index']);
@@ -217,7 +253,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/playground/test', [PlaygroundController::class, 'testPrompt']);
     });
 
-    // مسارات الإدارة العليا (Super Admin Only)
+    // Super Admin Only Endpoints
     Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
         Route::get('/overview', [AdminController::class, 'overview']);
         Route::get('/analytics', [AdminController::class, 'analytics']);
@@ -233,10 +269,18 @@ Route::prefix('v1')->group(function () {
 });
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### 3.2 وحدة تحكم الإدارة العليا ومحاكي الـ SQL (`AdminController.php`):
 تطبيق أمان صارم لمنع استعلامات التعديل في محاكي SQL وحصرها في القراءة فقط:
+
+</div>
+
+<div dir="ltr">
 
 ```php
 // backend/app/Http/Controllers/Api/AdminController.php
@@ -244,7 +288,7 @@ public function runSqlTerminal(Request $request): JsonResponse
 {
     $query = trim($request->input('query', ''));
     
-    // فحص أمني لمنع أي تعديل أو حذف
+    // Security check: disallow mutating operations
     $disallowed = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'TRUNCATE'];
     foreach ($disallowed as $keyword) {
         if (stripos($query, $keyword) !== false) {
@@ -271,14 +315,22 @@ public function runSqlTerminal(Request $request): JsonResponse
 }
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 # 4. 🔍 تشريح كود واستعلامات البحث الدلالي pgvector
 
 تستخدم المنصة معامل المسافة المتجهية `<=>` (Cosine Distance) لاكتشاف المقاطع النصية الأقرب دلالياً لسؤال العميل:
 
+</div>
+
+<div dir="ltr">
+
 ```php
-// استعلام البحث الدلالي في جدول knowledge_chunks
+// pgvector Cosine Similarity Query in knowledge_chunks
 $queryEmbedding = $this->generateEmbedding($customerQuery);
 
 $relevantChunks = DB::table('knowledge_chunks')
@@ -293,15 +345,24 @@ $relevantChunks = DB::table('knowledge_chunks')
     ->get();
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 # 5. 🧪 تشريح محرك الاختبارات الآلية الشاملة
 
 يتم تشغيل 118 فحصاً برمجياً مؤتمتاً في غضون ثوانٍ معدودة للتأكد من خلو النظام من أي أخطاء:
 
+</div>
+
+<div dir="ltr">
+
 ```bash
 php tests_suite_runner.php
 ```
+
 ```
 ================================================================================
   RUDOOD AI PLATFORM - COMPREHENSIVE AUTOMATED TEST SUITE
@@ -316,6 +377,10 @@ php tests_suite_runner.php
   TOTAL TESTS: 118 / 118 (100% SUCCESS)
 ================================================================================
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 

@@ -1,3 +1,5 @@
+<div dir="rtl">
+
 # 🧪 دليل الاختبارات والتحقق البرمجي لمنصة ردود (الإصدار الثاني V2)
 # Rudood AI Platform V2 — Comprehensive Automated Testing & Verification Guide
 
@@ -27,6 +29,10 @@
 * قنوات التواصل والـ Webhooks التفاعلية.
 * جناح الإدارة العليا ذو الـ 8 تبويبات (Super Admin 8-Module Suite).
 
+</div>
+
+<div dir="ltr">
+
 ```
 ================================================================================
   RUDOOD AI PLATFORM - COMPREHENSIVE AUTOMATED TEST SUITE
@@ -42,19 +48,31 @@
 ================================================================================
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ## 2. 🚀 كيفية تشغيل الاختبارات الآلية
 
 لتشغيل الاختبارات في البيئة المحلية:
 
+</div>
+
+<div dir="ltr">
+
 ```bash
-# الانتقال لمجلد الواجهة الخلفية
+# Navigate to backend
 cd backend
 
-# تشغيل مشغل الاختبارات الشامل
+# Run comprehensive test suite runner
 php tests_suite_runner.php
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
@@ -98,11 +116,15 @@ php tests_suite_runner.php
 
 للتحقق من سلامة كود TypeScript وخلو حزمة React 19 من أي أخطاء ترجمة:
 
+</div>
+
+<div dir="ltr">
+
 ```bash
 cd frontend
 npm run build
 ```
-المخرجات المتوقعة:
+
 ```
 ✓ 2484 modules transformed.
 dist/index.html                   0.96 kB
@@ -111,9 +133,14 @@ dist/assets/index-CjPfglgN.js   983.91 kB
 ✓ built in ~300ms
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 <div align="center">
   <b>منصة ردود للذكاء الاصطناعي — الإصدار الثاني (V2)</b><br>
   المستودع الرسمي: <a href="https://github.com/abdo544445/rudood-platform-v2">https://github.com/abdo544445/rudood-platform-v2</a>
+</div>
 </div>

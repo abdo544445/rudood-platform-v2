@@ -47,10 +47,18 @@
 * **فصل كامل:** الواجهة الأمامية مبنية كـ SPA مستقل عبر React 19 و TypeScript، ويتم تجميعها لملفات ثابتة (HTML + CSS + JS) تُحمّل لمرة واحدة فقط في متصفح العميل.
 * **التخاطب عبر JSON:** يتخاطب المتصفح مع خادم Laravel حصراً عبر استدعاءات REST API ترسل وتستقبل نصوص JSON فقط.
 
+</div>
+
+<div dir="ltr">
+
 ```
-[ متصفح المستخدم ] ◄─── JSON (REST API) ───► [ خادم Laravel 11 ] ◄───► [ PostgreSQL ]
-  (React 19 SPA)                                 (Backend Core)
+[ Browser Client ] ◄─── JSON (REST API) ───► [ Laravel 11 Backend ] ◄───► [ PostgreSQL ]
+ (React 19 SPA)                                 (Core Engine)
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
@@ -68,25 +76,43 @@
 # 4. 📘 لماذا يعتبر TypeScript 5.7 معيار الشركات الكبرى؟
 
 في JavaScript العادية، يمكنك ارتكاب أخطاء فادحة لا تظهر إلا للمستخدم النهائي عند تشغيل التطبيق (Runtime Errors):
+
+</div>
+
+<div dir="ltr">
+
 ```javascript
-// JavaScript: خطأ قاتل أثناء التشغيل
+// JavaScript: Uncaught TypeError at runtime
 function getUserName(user) {
-  return user.name.toUpperCase(); // سينهار التطبيق إذا كان user غير موجود أو name = undefined!
+  return user.name.toUpperCase(); // Crashes if user is null or name is undefined!
 }
 ```
 
-بينما في TypeScript:
+</div>
+
+<div dir="rtl">
+
+بينما في TypeScript يتم اكتشاف الخطأ فوراً أثناء الكتابة قبل النشر:
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
-// TypeScript: يكتشف الخطأ فوراً أثناء الكتابة ويمنع البناء
+// TypeScript: Compile-time type safe
 interface User {
   id: number;
   name: string;
 }
 
 function getUserName(user: User): string {
-  return user.name.toUpperCase(); // آمن 100%
+  return user.name.toUpperCase(); // 100% Type-safe
 }
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
@@ -97,10 +123,20 @@ function getUserName(user: User): string {
 2. يتحقق الخادم من صحة البيانات ويُصدر نصاً مشفراً (Token) مثل: `1|a8f93bc...`.
 3. يحفظ تطبيق React هذا التوكن في متجر **Zustand** المحلي.
 4. في كل طلب لاحق، يُحقن التوكن في ترويسة الطلب:
-   ```http
-   GET /api/v1/conversations
-   Authorization: Bearer 1|a8f93bc...
-   ```
+
+</div>
+
+<div dir="ltr">
+
+```http
+GET /api/v1/conversations
+Authorization: Bearer 1|a8f93bc...
+```
+
+</div>
+
+<div dir="rtl">
+
 5. يتحقق الخادم من التوكن وصلاحياته فوراً دون الحاجة لقراءة ملفات جلسات محلية.
 
 ---
@@ -129,9 +165,19 @@ function getUserName(user: User): string {
 1. يستقبل متحكم الـ Webhook الرسالة ويضعها في طابور **Redis** في غضون **5 ملي ثانية**.
 2. يُعيد للمرسل فوراً: `{"status": "queued"}` مع كود HTTP 200.
 3. في الخلفية، يعمل عامل معالجة مستقل (**Queue Worker**):
-   ```bash
-   php artisan queue:work --queue=ai-processing
-   ```
+
+</div>
+
+<div dir="ltr">
+
+```bash
+php artisan queue:work --queue=ai-processing
+```
+
+</div>
+
+<div dir="rtl">
+
 4. يقوم العامل بمعالجة كل رسالة بهدوء وإرسال الرد للعميل دون تعطيل خادم الويب.
 
 ---
@@ -142,6 +188,11 @@ function getUserName(user: User): string {
 **المطلوب:** اكتب `interface` بلغة TypeScript تُمثل مستخدم النظام `StoreUser` مع الحقول: المعرف الرقمي، الاسم، البريد، الدور (أدمن، مالك، وكيل)، وحقل اختياري للمتجر.
 
 **الحل:**
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
 export interface StoreUser {
   id: number;
@@ -153,12 +204,21 @@ export interface StoreUser {
 }
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### التمرين 2: إنشاء دالة فحص الصلاحية في Zustand
 **المطلوب:** أضف دالة `isAdmin()` لمتجر Zustand لمعرفة ما إذا كان المستخدم الحالي مديراً أعلى للمنصة.
 
 **الحل:**
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -166,12 +226,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### التمرين 3: اعتراض الأخطاء 401 وإعادة التوجيه لصفحة الدخول
 **المطلوب:** اكتب Axios Interceptor يقوم بتسجيل خروج المستخدم تلقائياً وتوجيهه لصفحة الدخول عند انتهاء صلاحية التوكن (Status 401).
 
 **الحل:**
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
 apiClient.interceptors.response.use(
   (response) => response,
@@ -185,12 +254,21 @@ apiClient.interceptors.response.use(
 );
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### التمرين 4: إضافة زر التدخل البشري لمحادثة معينة
 **المطلوب:** دالة React تستدعي مسار تعطيل البوت `/api/v1/conversations/:id/toggle-bot` وتحدث حالة الزر.
 
 **الحل:**
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
 const toggleBotStatus = async (conversationId: number, currentStatus: boolean) => {
   try {
@@ -204,12 +282,21 @@ const toggleBotStatus = async (conversationId: number, currentStatus: boolean) =
 };
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 ### التمرين 5: كتابة استعلام استرجاع المقاطع الأكثر شبهاً في Laravel
 **المطلوب:** كتابة استعلام Eloquent باستخدام إضافة `pgvector` للبحث عن أقرب 3 مقاطع لسؤال العميل بنسبة تشابه أعلى من 75%.
 
 **الحل:**
+
+</div>
+
+<div dir="ltr">
+
 ```php
 $chunks = DB::table('knowledge_chunks')
     ->select('content')
@@ -219,6 +306,10 @@ $chunks = DB::table('knowledge_chunks')
     ->limit(3)
     ->get();
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 

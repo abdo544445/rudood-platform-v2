@@ -55,9 +55,9 @@
 
 #### الفوائد الجوهرية للتحول المعماري:
 1. **أداء لا نهائي وتصفح فوري (Zero Page Reloads)**: استجابة فورية لكافة العمليات، التبديل اللحظي بين المحادثات والتبويبات دون أي إعادة تحميل للصفحة.
-2. **استقلالية الواجهة والنواة (Decoupled Scalability)**: إمكانية استضافة الواجهة الأمامية على شبكات CDN عالمية (مثل Cloudflare أو Vercel) ونواة الـ API على خوادم سحابية مخصصة.
+2. **استقلالية الواجهة والنواة (Decoupled Scalability)**: إمكانية استضافة الواجهة الأمامية على شبكات CDN عالمية ونواة الـ API على خوادم سحابية مخصصة.
 3. **أمان معزز بنظام التوكنز (Stateless Token Authentication)**: تحرر الخادم من إدارة الجلسات في الذاكرة ومزامنة التوكنز بأمان عبر ترويسات `Authorization: Bearer`.
-4. **تكامل متعدد الأجهزة (Omni-Platform Ready)**: إتاحة واجهات الـ REST API لربط تطبيقات الهواتف الذكية (iOS & Android) أو لوحات خارجية بسهولة تامة.
+4. **تكامل متعدد الأجهزة (Omni-Platform Ready)**: إتاحة واجهات الـ REST API لربط تطبيقات الهواتف الذكية أو لوحات خارجية بسهولة تامة.
 
 ---
 
@@ -89,24 +89,28 @@
 
 # 2. 🛠️ المكدس التقني الكامل والمنظومة البيئية (V2 Tech Stack)
 
+</div>
+
+<div dir="ltr">
+
 ```mermaid
 graph LR
-    subgraph "🎨 Client-Side Stack"
-        R19["⚛️ React 19.0.0"]
-        TS["📘 TypeScript 5.7"]
-        VITE["⚡ Vite 6.2 Bundler"]
-        ZUST["🐻 Zustand Store"]
-        AXIOS["🌐 Axios HTTP Client"]
-        LUCIDE["✨ Lucide React Icons"]
+    subgraph "Client-Side Stack"
+        R19["React 19.0.0"]
+        TS["TypeScript 5.7"]
+        VITE["Vite 6.2 Bundler"]
+        ZUST["Zustand Store"]
+        AXIOS["Axios HTTP Client"]
+        LUCIDE["Lucide React Icons"]
     end
 
-    subgraph "⚙️ Server-Side Stack"
-        L11["🐘 Laravel 11.x REST API"]
-        PHP["🚀 PHP 8.4 Runtime"]
-        PG["🐘 PostgreSQL 16"]
-        VEC["🔍 pgvector Extension"]
-        REDIS["🔴 Redis Alpine Cache/Queue"]
-        SOCK["🛰️ Node.js Socket.IO"]
+    subgraph "Server-Side Stack"
+        L11["Laravel 11.x REST API"]
+        PHP["PHP 8.4 Runtime"]
+        PG["PostgreSQL 16"]
+        VEC["pgvector Extension"]
+        REDIS["Redis Alpine Cache/Queue"]
+        SOCK["Node.js Socket.IO"]
     end
 
     R19 --- TS
@@ -121,35 +125,47 @@ graph LR
     REDIS --- SOCK
 ```
 
+</div>
+
+<div dir="rtl">
+
 ---
 
 # 3. 🏛️ المعمارية الهندسية ومسار تدفق البيانات
 
 ### 3.1 المخطط الهيكلي العام للأنظمة:
 
+</div>
+
+<div dir="ltr">
+
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Customer as 👤 العميل الخارجي
-    participant Channel as 📱 قنوات التواصل (WhatsApp/Telegram)
-    participant Router as 🔀 Laravel Webhook Router
-    participant Queue as 🔴 Redis Queue (ai-processing)
-    participant Engine as 🧠 محرك القرار الذكي (RAG + Multi-LLM)
-    participant DB as 🐘 PostgreSQL (pgvector)
-    participant WS as 🛰️ خادم Socket.IO
-    actor Agent as 🎧 لوحة التاجر (React 19 SPA)
+    actor Customer as End Customer
+    participant Channel as Inbound Channels (WhatsApp/Telegram/IG)
+    participant Router as Laravel Webhook Router
+    participant Queue as Redis Queue (ai-processing)
+    participant Engine as AI Decision Engine (RAG + Multi-LLM)
+    participant DB as PostgreSQL (pgvector)
+    participant WS as Node.js Socket.IO Server
+    actor Agent as Merchant Dashboard (React 19 SPA)
 
-    Customer->>Channel: إرسال استفسار ("أين طلبي؟")
-    Channel->>Router: إرسال Webhook POST مع Payload
-    Router->>Queue: إدراج وظيفة ProcessCustomerMessage (خلال 30ms)
-    Queue->>Engine: سحب الوظيفة ومعالجتها غير متزامنة
-    Engine->>DB: البحث الدلالي في متجهات المعرفة (Cosine Similarity)
-    Engine->>Engine: توليد الرد الذكي وتحليل المشاعر
-    Engine->>Channel: إرسال الرد للعميل فوراً (< 1.2s)
-    Engine->>DB: حفظ سجل القرار والرسالة في قاعدة البيانات
-    Engine->>WS: بث حدث NewMessageEvent عبر Redis
-    WS->>Agent: تحديث فوري لشاشة المحادثات دون تحديث الصفحة
+    Customer->>Channel: Send inquiry ("Where is my order #1002?")
+    Channel->>Router: Webhook POST payload
+    Router->>Queue: Dispatch ProcessCustomerMessage job (< 30ms)
+    Queue->>Engine: Async job execution
+    Engine->>DB: Cosine distance query (<=>) in pgvector
+    Engine->>Engine: Generate LLM response + Sentiment Analysis
+    Engine->>Channel: Send immediate reply to customer (< 1.2s)
+    Engine->>DB: Store telemetry, message, and decision logs
+    Engine->>WS: Broadcast NewMessageEvent via Redis
+    WS->>Agent: Instant live UI update without page reload
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
@@ -197,24 +213,32 @@ sequenceDiagram
 
 # 5. 🤖 محرك الذكاء الاصطناعي واسترجاع المعرفة
 
+</div>
+
+<div dir="ltr">
+
 ```mermaid
 flowchart TD
-    IN["📩 استلام رسالة العميل"] --> TIER1{"1️⃣ مطابقة القواعد الفورية (Auto-Rules)"}
+    IN["Inbound Customer Message"] --> TIER1{"1. Keyword Auto-Rules Matcher"}
     
-    TIER1 -- "تطابق كلمة مفتاحية" --> R1["⚡ رد فوري 0ms (بدون توكنز)"]
-    TIER1 -- "لا يوجد تطابق" --> TIER2{"2️⃣ هل المتجر يملك مستندات معرفة (RAG)؟"}
+    TIER1 -- "Matched" --> R1["Instant 0ms Reply (Zero Token Cost)"]
+    TIER1 -- "No Match" --> TIER2{"2. Knowledge Base & Semantic RAG?"}
     
-    TIER2 -- "نعم" --> VEC["🔍 توليد Vector والاستعلام من pgvector"]
-    TIER2 -- "لا" --> PROMPT["تحضير برومبت نبرة المتجر"]
+    TIER2 -- "Active" --> VEC["pgvector Cosine Search (<=> operator)"]
+    TIER2 -- "Disabled" --> PROMPT["Prepare Merchant Tone & System Prompt"]
     
     VEC --> PROMPT
-    PROMPT --> LLM["3️⃣ توليد الرد بالـ LLM (Gemini / OpenAI)"]
-    LLM --> SENT{"4️⃣ فحص المشاعر (Sentiment Analysis)"}
+    PROMPT --> LLM["3. LLM Generation (Gemini / OpenAI / Claude)"]
+    LLM --> SENT{"4. Sentiment & Urgency Analysis"}
     
-    SENT -- "عميل غاضب جداً" --> ESC["🚨 تحويل فوري للمشرف البشري"]
-    SENT -- "استفسار عادي" --> OUT["إرسال الرد وتحديث شاشة الشات"]
+    SENT -- "Severe Anger / Escalation" --> ESC["Human Takeover Alert + Live Push"]
+    SENT -- "Normal" --> OUT["Send Reply to Customer + Telemetry Log"]
     ESC --> OUT
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
@@ -222,6 +246,11 @@ flowchart TD
 
 ### 6.1 مصادقة التوكنز وعزل بيانات المتاجر:
 تعتمد الواجهة الأمامية React 19 على عميل Axios المركزي (`apiClient.ts`)، حيث يتم حقن توكن المصادقة تلقائياً في كل طلب:
+
+</div>
+
+<div dir="ltr">
+
 ```typescript
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
@@ -231,6 +260,11 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 ```
+
+</div>
+
+<div dir="rtl">
+
 وفي الواجهة الخلفية، تقوم طبقة الحماية بالتحقق من هوية التاجر وعزل كافة الاستعلامات داخل نطاق `store_id` الخاص به حصراً لمنع أي تسريب بيانات بين الشركات.
 
 ### 6.2 ميزة انتحال الجلسة للمتاجر (1-Click Impersonation):
@@ -250,9 +284,14 @@ apiClient.interceptors.request.use((config) => {
 * اختبارات محرك البحث الدلالي pgvector.
 * اختبارات جناح الإدارة العليا ذو الـ 8 تبويبات ومحاكي استعلامات SQL.
 
+</div>
+
+<div dir="ltr">
+
 ```bash
 cd backend && php tests_suite_runner.php
 ```
+
 ```
 ================================================================================
   RUDOOD AI PLATFORM - COMPREHENSIVE AUTOMATED TEST SUITE
@@ -263,6 +302,10 @@ cd backend && php tests_suite_runner.php
   Status:      ALL SYSTEMS GREEN
 ================================================================================
 ```
+
+</div>
+
+<div dir="rtl">
 
 ---
 
