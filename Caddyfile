@@ -1,6 +1,6 @@
-# Clean Direct HTTP Setup for Droplet IP: 178.128.38.186
+# Clean Direct HTTP Setup for Localhost & Droplet
 :80 {
-    # Route WebSocket connections for Live Chat
+    # Route WebSocket connections for Live Chat & Notifications
     @websocket {
         header Connection *Upgrade*
         header Upgrade websocket
@@ -11,9 +11,58 @@
         reverse_proxy websocket:3000
     }
 
-    # Route all standard web requests to Laravel Application
-    handle {
+    # Route Backend API Requests to Laravel Application
+    handle /api/* {
         reverse_proxy app:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Route Webhook Integrations (WhatsApp, Instagram, Telegram)
+    handle /webhook/* {
+        reverse_proxy app:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Route Live Chat Embedded Widget Script & Config
+    handle /widget/* {
+        reverse_proxy app:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /widget.js {
+        reverse_proxy app:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Route Uploaded Media Storage
+    handle /storage/* {
+        reverse_proxy app:80 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Route all UI & Application Traffic to Decoupled React 19 Frontend SPA
+    handle {
+        reverse_proxy frontend:80 {
             header_up Host {host}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}

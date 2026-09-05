@@ -12,12 +12,16 @@ class SocketService {
   private updateHandlers: Set<ConversationUpdateHandler> = new Set();
   private isConnecting: boolean = false;
 
-  public init(serverUrl: string = 'http://localhost:3000') {
+  public init(serverUrl?: string) {
     if (this.socket || this.isConnecting) return;
     this.isConnecting = true;
 
+    const defaultUrl = import.meta.env.VITE_WS_URL 
+      || (typeof window !== 'undefined' && window.location.port === '5173' ? 'http://localhost:3000' : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'));
+    const url = serverUrl || defaultUrl;
+
     try {
-      this.socket = io(serverUrl, {
+      this.socket = io(url, {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,

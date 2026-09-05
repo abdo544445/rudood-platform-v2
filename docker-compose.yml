@@ -13,6 +13,19 @@ services:
     depends_on:
       - app
       - websocket
+      - frontend
+    networks:
+      - rudood_network
+
+  frontend:
+    image: rudood_frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rudood_frontend
+    restart: always
+    expose:
+      - "80"
     networks:
       - rudood_network
 
