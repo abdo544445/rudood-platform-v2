@@ -24,46 +24,46 @@ export const PublicNavbar: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#080d19]/80 backdrop-blur-xl border-b border-white/5 font-['Cairo',sans-serif]">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="w-full max-w-[1750px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
           <img
             src="/images/img.png"
             alt="منصة ردود"
-            className="h-10 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform"
+            className="h-10 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform shrink-0"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }}
           />
-          <div>
-            <span className="text-xl font-black tracking-wide gold-gradient-text block">منصة ردود</span>
-            <span className="text-[10px] text-slate-400 font-bold block -mt-1">RUDOOD AI PLATFORM</span>
+          <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+            <span className="text-xl font-black tracking-wide gold-gradient-text whitespace-nowrap">منصة ردود</span>
+            <span className="text-[11px] text-amber-400/90 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">RUDOOD AI</span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-full border border-white/5 shadow-inner relative">
+        <nav className="hidden lg:flex items-center gap-1.5 bg-slate-900/60 p-1.5 rounded-full border border-white/5 shadow-inner relative shrink-0">
           {navLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.to === '/'}
               className={({ isActive }) =>
-                `px-3.5 py-2 rounded-full text-xs font-bold transition-all ${
+                `px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
                   isActive
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`
               }
             >
-              {link.label}
+              <span className="whitespace-nowrap">{link.label}</span>
             </NavLink>
           ))}
 
           {/* أقسام المنصة Dropdown */}
-          <div className="relative group">
-            <button className="px-3.5 py-2 rounded-full text-xs font-bold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 transition-all flex items-center gap-1">
-              <span>أقسام المنصة</span>
+          <div className="relative group shrink-0">
+            <button className="px-3.5 py-2 rounded-full text-xs font-bold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 transition-all flex items-center gap-1 whitespace-nowrap shrink-0">
+              <span className="whitespace-nowrap">أقسام المنصة</span>
               <span className="text-[10px]">▼</span>
             </button>
             <div className="absolute top-full right-0 mt-2 w-56 p-2 rounded-2xl bg-[#0b1120] border border-amber-500/30 shadow-2xl backdrop-blur-xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all z-50">
@@ -102,38 +102,38 @@ export const PublicNavbar: React.FC = () => {
         </nav>
 
         {/* Right CTA Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3 shrink-0">
           {/* Live Demo Pulsating Pill */}
           <Link
             to="/demo"
-            className="px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center gap-2 hover:bg-rose-500/20 transition-all shadow-lg shadow-rose-500/10"
+            className="px-4 py-2 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center gap-2 hover:bg-rose-500/20 transition-all shadow-lg shadow-rose-500/10 whitespace-nowrap shrink-0"
           >
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            <span>تجربة محاكاة حية</span>
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+            <span className="whitespace-nowrap">تجربة محاكاة حية</span>
           </Link>
 
           {isAuthenticated ? (
             <Link
               to="/dashboard"
-              className="px-5 py-2.5 rounded-full gold-btn text-xs font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20"
+              className="px-5 py-2.5 rounded-full gold-btn text-xs font-bold flex items-center gap-2 shadow-lg shadow-amber-500/20 whitespace-nowrap shrink-0"
             >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>لوحة التحكم ({user?.name || 'حسابي'})</span>
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span className="whitespace-nowrap">لوحة التحكم {user?.name ? `(${user.name})` : ''}</span>
             </Link>
           ) : (
             <>
               <Link
                 to="/login"
-                className="px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white transition-colors"
+                className="px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white transition-colors whitespace-nowrap shrink-0"
               >
                 تسجيل الدخول
               </Link>
               <Link
                 to="/register"
-                className="px-5 py-2.5 rounded-full gold-btn text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+                className="px-5 py-2.5 rounded-full gold-btn text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20 whitespace-nowrap shrink-0"
               >
-                <span>ابدأ مجاناً</span>
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="whitespace-nowrap">ابدأ مجاناً</span>
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
               </Link>
             </>
           )}

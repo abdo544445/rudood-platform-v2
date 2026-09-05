@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Bot, 
   Send, 
@@ -9,20 +9,15 @@ import {
   Stethoscope, 
   Building2, 
   RotateCcw,
-  ExternalLink,
-  ShieldCheck,
+  ArrowLeft,
   CheckCircle2
 } from 'lucide-react';
 import { PublicNavbar } from '../../components/layout/PublicNavbar';
 import { PublicFooter } from '../../components/layout/PublicFooter';
 import { AmbientCanvas } from '../../components/common/AmbientCanvas';
 import { apiClient } from '../../services/apiClient';
-import { useAuthStore } from '../../store/useAuthStore';
 
 export const DemoPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { login } = useAuthStore();
-
   const [selectedIndustry, setSelectedIndustry] = useState('ecommerce');
   const [messages, setMessages] = useState<any[]>([
     { 
@@ -33,7 +28,6 @@ export const DemoPage: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const industries = [
     {
@@ -41,7 +35,6 @@ export const DemoPage: React.FC = () => {
       name: 'متجر عطور وساعات',
       storeName: 'متجر أريج للعطور والساعات الفاخرة',
       botName: 'مساعد أريج الذكي',
-      email: 'demo.ecommerce@rudood.com',
       icon: ShoppingBag,
       color: 'purple',
       welcomeMessage: 'أهلاً بك في متجر أريج للعطور والساعات الفاخرة ✨ تفضل بسؤالك عن تشكيلتنا أو الأسعار أو العروض وسأخدمك فوراً!',
@@ -52,7 +45,6 @@ export const DemoPage: React.FC = () => {
       name: 'مطعم وكافيه راقي',
       storeName: 'مطعم ومقهى ديوان النخيل',
       botName: 'مساعد ديوان النخيل الذكي',
-      email: 'demo.restaurant@rudood.com',
       icon: Coffee,
       color: 'emerald',
       welcomeMessage: 'مرحباً بك في ديوان النخيل 🍽️☕ كيف يمكننا إسعادك اليوم؟ نسعد بإجابتك عن المنيو، الحجوزات، أو أوقات العمل!',
@@ -63,7 +55,6 @@ export const DemoPage: React.FC = () => {
       name: 'مجمع عيادات وأسنان',
       storeName: 'مجمع عيادات الابتسامة والجلدية',
       botName: 'منسق المواعيد والخدمات الطبية',
-      email: 'demo.clinic@rudood.com',
       icon: Stethoscope,
       color: 'sky',
       welcomeMessage: 'أهلاً بك في مجمع عيادات الابتسامة والجلدية 🩺✨ يسعدنا مساعدتك في حجز المواعيد ومعرفة تفاصيل خدماتنا الطبية والتجميلية.',
@@ -74,7 +65,6 @@ export const DemoPage: React.FC = () => {
       name: 'شركة عقارات وتطوير',
       storeName: 'شركة صروح نجد العقارية',
       botName: 'المستشار العقاري الذكي',
-      email: 'demo.realestate@rudood.com',
       icon: Building2,
       color: 'amber',
       welcomeMessage: 'مرحباً بك في صروح نجد العقارية 🏢🏡 كيف يمكن لمستشارك العقاري مساعدتك في اختيار عقار أحلامك اليوم؟',
@@ -137,25 +127,6 @@ export const DemoPage: React.FC = () => {
     ]);
   };
 
-  const handleDirectLogin = async () => {
-    setIsLoggingIn(true);
-    try {
-      const res = await apiClient.post('/auth/login', {
-        email: currentIndustry.email,
-        password: 'password123',
-      });
-      if (res.data.success) {
-        const d = res.data.data;
-        login(d.token, d.user, d.workspace || null, d.bot || null);
-        navigate('/dashboard');
-      }
-    } catch (e) {
-      alert('تعذر الدخول للحساب التجريبي المخصص، يرجى المحاولة لاحقاً');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#080d19] text-slate-100 relative font-['Cairo',sans-serif]">
       <AmbientCanvas />
@@ -166,13 +137,13 @@ export const DemoPage: React.FC = () => {
         <div className="text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold mb-3">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>محاكاة تفاعلية بحسابات ومحتوى معزول 100%</span>
+            <span>تجربة تفاعلية حية لمساعد الذكاء الاصطناعي</span>
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">
             استعرض ذكاء البوت في <span className="gold-gradient-text">{currentIndustry.name}</span>
           </h1>
           <p className="text-xs md:text-sm text-slate-400 mt-2">
-            تم تخصيص حسابات متكاملة بقواعد معرفية وردود خاصة بكل مجال لمنع أي تداخل بين المتاجر
+            جرب قدرة روبوت ردود الذكي على فهم استفسارات العملاء والرد الفوري بدقة في مختلف المجالات والأنشطة التجارية.
           </p>
         </div>
 
@@ -200,39 +171,32 @@ export const DemoPage: React.FC = () => {
           })}
         </div>
 
-        {/* Dedicated Store Info Banner & 1-Click Login */}
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 backdrop-blur-xl shadow-lg">
+        {/* Industry Simulation Status Banner */}
+        <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-xl shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg shrink-0">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-white">{currentIndustry.storeName}</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">
-                  حساب معزول ومخصص
+                <span className="text-sm font-black text-white">{currentIndustry.storeName}</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                  محاكاة نشطة
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                البريد المخصص: <span className="text-amber-300 font-mono">{currentIndustry.email}</span> • كلمة المرور: <span className="text-slate-300 font-mono">password123</span>
+              <p className="text-xs text-slate-400 mt-0.5">
+                يمكنك كتابة أي سؤال أو اختيار الأسئلة المقترحة بالأسفل لاختبار دقة وسرعة الاستجابة.
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleDirectLogin}
-            disabled={isLoggingIn}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all shrink-0 cursor-pointer disabled:opacity-50"
+          <Link
+            to="/register"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all shrink-0 cursor-pointer"
           >
-            {isLoggingIn ? (
-              <span>جاري الدخول للوحة المتجر...</span>
-            ) : (
-              <>
-                <span>دخول مباشر للوحة تحكم هذا المتجر</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
+            <span>ابدأ تجربة متجرك مجاناً</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         {/* Simulator Frame */}
@@ -248,7 +212,7 @@ export const DemoPage: React.FC = () => {
                   <span>{currentIndustry.botName}</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </h3>
-                <span className="text-[10px] text-slate-400">متصل الآن • محاكاة سحابية معزولة بقواعد بيانات حصرية</span>
+                <span className="text-[10px] text-slate-400">متصل الآن • محاكاة فورية عبر محرك ردود الذكي</span>
               </div>
             </div>
 
@@ -287,9 +251,9 @@ export const DemoPage: React.FC = () => {
                     {m.trigger && (
                       <span className="text-[9px] font-bold text-amber-400/90 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        {m.trigger === 'auto_rule' && 'قاعدة رد فوري مخصصة لهذا المتجر ⚡'}
-                        {m.trigger === 'ai_api' && 'ذكاء اصطناعي فوري من مستندات المتجر ✨'}
-                        {m.trigger === 'domain_dedicated_fallback' && 'إجابة قطاعية معتمدة حصرياً 🛡️'}
+                        {m.trigger === 'auto_rule' && 'قاعدة رد فوري مخصصة ⚡'}
+                        {m.trigger === 'ai_api' && 'ذكاء اصطناعي فوري من مستندات النشاط ✨'}
+                        {m.trigger === 'domain_dedicated_fallback' && 'إجابة قطاعية معتمدة 🛡️'}
                       </span>
                     )}
                     {m.latency && (
