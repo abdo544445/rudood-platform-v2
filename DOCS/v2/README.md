@@ -15,10 +15,11 @@
 
 | المستند | الوصف والمحتوى |
 | :--- | :--- |
-| **[1. المخطط المعماري الكامل (Architecture Outline)](file:///Users/alatrash/Documents/work/lara%20/HERE%20PROJECT/rudood-platform/DOCS/v2/RUDOOD_PLATFORM_V2_COMPLETE_ARCHITECTURE_OUTLINE.md)** | تشريح معماري شامل لطبقات النظام الخمس، دورة حياة الطلب عبر Axios و REST API، نظام الـ WebSockets اللحظي، ومسار الذكاء الاصطناعي متعدد المستويات (3-Tier AI Engine). |
-| **[2. الدليل البرمجي والصيغ التراكيبية (Code & Syntax Guide)](file:///Users/alatrash/Documents/work/lara%20/HERE%20PROJECT/rudood-platform/DOCS/v2/RUDOOD_PLATFORM_V2_COMPLETE_CODE_AND_SYNTAX_GUIDE.md)** | تحليل برمجي مفصل سطراً بسطر لمكونات React 19، الخطافات (Hooks)، إدارة الحالة عبر Zustand، متحكمات Laravel REST، استعلامات pgvector، وجناح Super Admin ذو الـ 8 تبويبات. |
-| **[3. الموسوعة التعليمية الشاملة للطلاب (Student Master Guide)](file:///Users/alatrash/Documents/work/lara%20/HERE%20PROJECT/rudood-platform/DOCS/v2/RUDOOD_PLATFORM_V2_BEGINNER_STUDENT_MASTER_GUIDE.md)** | مرجع تعليمي ضخم ينطلق من الصفر لشرح المعمارية المفصولة (Decoupled vs Monolith)، كيف تعمل الـ SPAs، مصادقة JWT، والرياضيات وراء متجهات الذكاء الاصطناعي مع 10 تمارين عملية وحلولها. |
-| **[4. دليل الاختبارات والتحقق البرمجي (Testing & Verification Guide)](file:///Users/alatrash/Documents/work/lara%20/HERE%20PROJECT/rudood-platform/DOCS/v2/RUDOOD_PLATFORM_V2_TESTING_AND_VERIFICATION_GUIDE.md)** | توثيق كامل لـ 118 اختباراً آلياً تغطي وحدات النظام بنسبة نجاح 100%، مع خطوات تشغيل الفحوصات والتحقق الأمني. |
+| **[1. المخطط المعماري الكامل (Architecture Outline)](./RUDOOD_PLATFORM_V2_COMPLETE_ARCHITECTURE_OUTLINE.md)** | تشريح معماري شامل لطبقات النظام الخمس، دورة حياة الطلب عبر Axios و REST API، نظام الـ WebSockets اللحظي، ومسار الذكاء الاصطناعي متعدد المستويات (3-Tier AI Engine). |
+| **[2. الدليل البرمجي والصيغ التراكيبية (Code & Syntax Guide)](./RUDOOD_PLATFORM_V2_COMPLETE_CODE_AND_SYNTAX_GUIDE.md)** | تحليل برمجي مفصل سطراً بسطر لمكونات React 19، الخطافات (Hooks)، إدارة الحالة عبر Zustand، متحكمات Laravel REST، استعلامات pgvector، وجناح Super Admin ذو الـ 8 تبويبات. |
+| **[3. الموسوعة التعليمية الشاملة للطلاب (Student Master Guide)](./RUDOOD_PLATFORM_V2_BEGINNER_STUDENT_MASTER_GUIDE.md)** | مرجع تعليمي ضخم ينطلق من الصفر لشرح المعمارية المفصولة (Decoupled vs Monolith)، كيف تعمل الـ SPAs، مصادقة JWT، والرياضيات وراء متجهات الذكاء الاصطناعي مع 10 تمارين عملية وحلولها. |
+| **[4. دليل الاختبارات والتحقق البرمجي (Testing & Verification Guide)](./RUDOOD_PLATFORM_V2_TESTING_AND_VERIFICATION_GUIDE.md)** | توثيق كامل لـ 118 اختباراً آلياً تغطي وحدات النظام بنسبة نجاح 100%، مع خطوات تشغيل الفحوصات والتحقق الأمني. |
+| **[5. أسئلة الدكتور — مناقشة الـ MVC والتكامل المفصول](./اسئله%20الدكتور.md)** | دليل شامل باللغتين العربية والإنجليزية للإجابة على أسئلة الدكتور ولجنة التحكيم حول الروت، الكنترول، المودل، الواجهات، وشرح طبقات الربط والتكامل الـ 5 بين الفرونت إند والباك إند. |
 
 ---
 
