@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { 
   Menu, 
@@ -11,6 +11,33 @@ import { useAuthStore } from '../../store/useAuthStore';
 export const PublicNavbar: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<any>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setSectionsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setSectionsOpen(false);
+    }, 200); // 200ms grace buffer ensures smooth transition without premature disappearance
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setSectionsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const navLinks = [
     { to: '/', label: 'الرئيسية' },
@@ -61,42 +88,85 @@ export const PublicNavbar: React.FC = () => {
           ))}
 
           {/* أقسام المنصة Dropdown */}
-          <div className="relative group shrink-0">
-            <button className="px-3.5 py-2 rounded-full text-xs font-bold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 transition-all flex items-center gap-1 whitespace-nowrap shrink-0">
+          <div 
+            ref={dropdownRef}
+            className="relative shrink-0"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button 
+              type="button"
+              onClick={() => setSectionsOpen(!sectionsOpen)}
+              className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
+                sectionsOpen 
+                  ? 'bg-amber-500/20 text-amber-300 shadow-sm' 
+                  : 'text-amber-400 hover:text-amber-300 hover:bg-slate-800/60'
+              }`}
+            >
               <span className="whitespace-nowrap">أقسام المنصة</span>
-              <span className="text-[10px]">▼</span>
+              <span className={`text-[9px] transition-transform duration-200 ${sectionsOpen ? 'rotate-180 text-amber-300' : ''}`}>▼</span>
             </button>
-            <div className="absolute top-full right-0 mt-2 w-56 p-2 rounded-2xl bg-[#0b1120] border border-amber-500/30 shadow-2xl backdrop-blur-xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all z-50">
-              <Link to="/demo" className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors">
-                <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">🤖</span>
-                <div>
-                  <div>الرد الآلي والأتمتة</div>
-                  <div className="text-[10px] text-slate-400 font-normal">استعراض حي لمحاكاة الردود</div>
-                </div>
-              </Link>
-              <Link to="/demo" className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors">
-                <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">💬</span>
-                <div>
-                  <div>المحادثات المباشرة</div>
-                  <div className="text-[10px] text-slate-400 font-normal">تجربة الشات مع المساعد</div>
-                </div>
-              </Link>
-              <Link to="/demo" className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors">
-                <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">🧠</span>
-                <div>
-                  <div>الذكاء الاصطناعي 24/7</div>
-                  <div className="text-[10px] text-slate-400 font-normal">استرجاع دقيق من الكتالوج</div>
-                </div>
-              </Link>
-              <div className="my-1 border-t border-white/5" />
-              <Link to="/how-it-works" className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors">
-                <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">📖</span>
-                <span>دليل تشغيل البوت الرباعي</span>
-              </Link>
-              <Link to="/demo" className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors">
-                <span className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400">🔴</span>
-                <span>استعراض حي شامل للأنشطة</span>
-              </Link>
+
+            {/* Dropdown Menu Container (pt-2 provides continuous mouse tracking bridge with zero dead gap) */}
+            <div 
+              className={`absolute top-full right-0 pt-2 w-60 z-50 transition-all duration-200 ${
+                sectionsOpen 
+                  ? 'opacity-100 translate-y-0 pointer-events-auto visible' 
+                  : 'opacity-0 translate-y-2 pointer-events-none invisible'
+              }`}
+            >
+              <div className="p-2 rounded-2xl bg-[#0b1120] border border-amber-500/30 shadow-2xl backdrop-blur-2xl space-y-0.5">
+                <Link 
+                  to="/demo" 
+                  onClick={() => setSectionsOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors"
+                >
+                  <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">🤖</span>
+                  <div>
+                    <div>الرد الآلي والأتمتة</div>
+                    <div className="text-[10px] text-slate-400 font-normal">استعراض حي لمحاكاة الردود</div>
+                  </div>
+                </Link>
+                <Link 
+                  to="/demo" 
+                  onClick={() => setSectionsOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors"
+                >
+                  <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">💬</span>
+                  <div>
+                    <div>المحادثات المباشرة</div>
+                    <div className="text-[10px] text-slate-400 font-normal">تجربة الشات مع المساعد</div>
+                  </div>
+                </Link>
+                <Link 
+                  to="/demo" 
+                  onClick={() => setSectionsOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-300 transition-colors"
+                >
+                  <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">🧠</span>
+                  <div>
+                    <div>الذكاء الاصطناعي 24/7</div>
+                    <div className="text-[10px] text-slate-400 font-normal">استرجاع دقيق من الكتالوج</div>
+                  </div>
+                </Link>
+                <div className="my-1 border-t border-white/5" />
+                <Link 
+                  to="/how-it-works" 
+                  onClick={() => setSectionsOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                >
+                  <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">📖</span>
+                  <span>دليل تشغيل البوت الرباعي</span>
+                </Link>
+                <Link 
+                  to="/demo" 
+                  onClick={() => setSectionsOpen(false)}
+                  className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors"
+                >
+                  <span className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400">🔴</span>
+                  <span>استعراض حي شامل للأنشطة</span>
+                </Link>
+              </div>
             </div>
           </div>
         </nav>
