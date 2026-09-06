@@ -253,6 +253,37 @@ class AdminController extends BaseApiController
     }
 
     /**
+     * Store new subscriber request manually by Super Admin.
+     */
+    public function storeSubscriber(Request $request): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255',
+            'phone'         => 'required|string|max:50',
+            'company_name'  => 'required|string|max:255',
+            'selected_plan' => 'nullable|string|in:starter,pro,enterprise,professional',
+            'notes'         => 'nullable|string',
+            'admin_notes'   => 'nullable|string',
+        ]);
+
+        $sub = SubscriberRequest::create([
+            'name'          => $validated['name'],
+            'email'         => $validated['email'],
+            'phone'         => $validated['phone'],
+            'company_name'  => $validated['company_name'],
+            'selected_plan' => $validated['selected_plan'] ?? 'pro',
+            'notes'         => $validated['notes'] ?? 'طلب مسجل يدوياً',
+            'admin_notes'   => $validated['admin_notes'] ?? 'تمت الإضافة من لوحة القيادة العليا',
+            'status'        => 'pending',
+        ]);
+
+        return $this->success($sub, "تمت إضافة طلب المشترك «{$sub->name}» بنجاح ✓");
+    }
+
+    /**
      * List contact inquiries with 1-click status filtering.
      */
     public function contactMessages(Request $request): JsonResponse
@@ -489,6 +520,64 @@ class AdminController extends BaseApiController
             'user'      => $owner,
             'workspace' => $workspace,
         ], "تم إنشاء جلسة تسجيل دخول كمالك لمتجر «{$workspace->company_name}»");
+    }
+
+    /**
+     * Show full workspace details, bot configuration, knowledge base, users, and channels.
+     */
+    public function showWorkspace(int $id): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $workspace = Workspace::with([
+            'users' => fn($q) => $q->latest(),
+            'bots' => fn($q) => $q->with(['knowledgeBases', 'autoRules']),
+            'channels'
+        ])
+        ->withCount(['conversations', 'customers', 'messages', 'users', 'bots'])
+        ->findOrFail($id);
+
+        $subscription = null;
+        try {
+            if (class_exists(\App\Models\Subscription::class)) {
+                $subscription = \App\Models\Subscription::where('workspace_id', $id)->latest()->first();
+            }
+        } catch (\Throwable $e) {}
+
+        return $this->success([
+            'workspace'    => $workspace,
+            'subscription' => $subscription,
+            'owner'        => $workspace->users->where('role', 'owner')->first() ?? $workspace->users->first(),
+            'bots'         => $workspace->bots,
+            'users'        => $workspace->users,
+            'channels'     => $workspace->channels ?? [],
+        ]);
+    }
+
+    /**
+     * Instantly switch the Super Admin active workspace context.
+     */
+    public function switchWorkspace(Request $request): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $request->validate([
+            'workspace_id' => 'required|exists:workspaces,id',
+        ]);
+
+        $workspace = Workspace::findOrFail($request->workspace_id);
+        $user = $this->user();
+        
+        $user->workspace_id = $workspace->id;
+        $user->save();
+
+        $token = $user->createToken('admin-switched-session')->plainTextToken;
+
+        return $this->success([
+            'token'     => $token,
+            'workspace' => $workspace,
+            'user'      => $user,
+        ], "تم تحويل مساحة العمل النشطة فورياً إلى «{$workspace->company_name}» 🏢");
     }
 
     /**

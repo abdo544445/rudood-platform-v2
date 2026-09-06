@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   ShieldAlert, 
   MessageSquare, 
@@ -18,7 +19,9 @@ import {
   Terminal,
   Play,
   RotateCcw,
-  Server
+  Server,
+  Eye,
+  ChevronLeft
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -33,10 +36,46 @@ import {
   Cell
 } from 'recharts';
 import { apiClient } from '../../services/apiClient';
+import { SubscribersTab } from './components/SubscribersTab';
+import { ContactsTab } from './components/ContactsTab';
+import { StoreDetailModal } from './components/StoreDetailModal';
+
+export type AdminTabKey = 
+  | 'overview' 
+  | 'statistics' 
+  | 'subscribers' 
+  | 'workspaces' 
+  | 'users' 
+  | 'articles' 
+  | 'contacts' 
+  | 'database' 
+  | 'audit' 
+  | 'system';
 
 export const AdminPage: React.FC = () => {
-  // Navigation Tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'statistics' | 'workspaces' | 'users' | 'articles' | 'database' | 'audit' | 'system'>('overview');
+  // Navigation Tabs with URL query param sync
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabQuery = searchParams.get('tab') as AdminTabKey | null;
+
+  const validTabs: AdminTabKey[] = [
+    'overview', 'statistics', 'subscribers', 'workspaces', 
+    'users', 'articles', 'contacts', 'database', 'audit', 'system'
+  ];
+
+  const [activeTab, setActiveTab] = useState<AdminTabKey>(() => {
+    return (tabQuery && validTabs.includes(tabQuery)) ? tabQuery : 'overview';
+  });
+
+  useEffect(() => {
+    if (tabQuery && validTabs.includes(tabQuery) && tabQuery !== activeTab) {
+      setActiveTab(tabQuery);
+    }
+  }, [tabQuery]);
+
+  const handleTabChange = (tab: AdminTabKey) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Overview Data
   const [overview, setOverview] = useState<any>({});
@@ -53,6 +92,7 @@ export const AdminPage: React.FC = () => {
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [workspaceSearch, setWorkspaceSearch] = useState('');
   const [workspaceStatus, setWorkspaceStatus] = useState('');
+  const [selectedWorkspaceForDetail, setSelectedWorkspaceForDetail] = useState<number | null>(null);
   const [createWorkspaceModalOpen, setCreateWorkspaceModalOpen] = useState(false);
   const [newWorkspaceForm, setNewWorkspaceForm] = useState({
     company_name: '',
@@ -373,34 +413,181 @@ export const AdminPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 2. Admin Navigation Tabs (Full Parity with Laravel Views) ───────── */}
-      <div className="flex flex-wrap items-center gap-2 bg-slate-900/60 p-2 rounded-2xl border border-white/5 backdrop-blur-xl">
-        {[
-          { id: 'overview', label: 'لوحة القيادة والمراقبة', icon: Activity },
-          { id: 'statistics', label: 'التحليلات والمراقبة المتقدمة', icon: TrendingUp },
-          { id: 'workspaces', label: 'دليل الشركات والمتاجر', icon: Building },
-          { id: 'users', label: 'المستخدمين وملاك المتاجر', icon: Users },
-          { id: 'articles', label: 'مقالات المدونة (CMS)', icon: BookOpen },
-          { id: 'database', label: 'مستكشف قاعدة البيانات والـ SQL', icon: Database },
-          { id: 'audit', label: 'سجل تدقيق الأنشطة (Audit)', icon: ShieldAlert },
-          { id: 'system', label: 'النظام والصيانة المجدولة', icon: Server },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* ── 2. Admin Navigation Tabs (Organized Hierarchically into 3 Sections Matching Laravel Views) ───────── */}
+      <div className="p-3 sm:p-4 rounded-3xl bg-slate-900/80 border border-white/5 backdrop-blur-xl shadow-xl space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          {/* Section 1: Reports & Telemetry */}
+          <div className="bg-slate-950/60 p-2 rounded-2xl border border-white/5 space-y-1.5">
+            <div className="text-[10px] font-black text-slate-400 px-2 py-0.5 uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Activity className="w-3 h-3 text-amber-400" />
+                <span>التقارير والمؤشرات</span>
+              </span>
+              <span className="text-amber-400/80 font-mono text-[9px]">3 أقسام</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              <button
+                onClick={() => handleTabChange('overview')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'overview'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>المراقبة</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('statistics')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'statistics'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>التحليلات</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('subscribers')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 relative ${
+                  activeTab === 'subscribers'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>المشتركين</span>
+                {subscribers.length > 0 && (
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                    activeTab === 'subscribers' ? 'bg-slate-950 text-amber-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  }`}>
+                    {subscribers.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Section 2: Platform & Stores Management */}
+          <div className="bg-slate-950/60 p-2 rounded-2xl border border-white/5 space-y-1.5">
+            <div className="text-[10px] font-black text-slate-400 px-2 py-0.5 uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Building className="w-3 h-3 text-amber-400" />
+                <span>إدارة المنصة والمحتوى</span>
+              </span>
+              <span className="text-amber-400/80 font-mono text-[9px]">4 أقسام</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1">
+              <button
+                onClick={() => handleTabChange('workspaces')}
+                className={`px-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'workspaces'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Building className="w-3.5 h-3.5" />
+                <span>المتاجر</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('users')}
+                className={`px-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'users'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>المستخدمين</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('articles')}
+                className={`px-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'articles'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>المدونة</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('contacts')}
+                className={`px-1.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 relative ${
+                  activeTab === 'contacts'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>تواصل</span>
+                {contacts.length > 0 && (
+                  <span className={`text-[9px] px-1 py-0.2 rounded-full font-black ${
+                    activeTab === 'contacts' ? 'bg-slate-950 text-amber-300' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  }`}>
+                    {contacts.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Section 3: Infrastructure & Maintenance */}
+          <div className="bg-slate-950/60 p-2 rounded-2xl border border-white/5 space-y-1.5">
+            <div className="text-[10px] font-black text-slate-400 px-2 py-0.5 uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Server className="w-3 h-3 text-amber-400" />
+                <span>البنية التحتية والأمان</span>
+              </span>
+              <span className="text-amber-400/80 font-mono text-[9px]">3 أقسام</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              <button
+                onClick={() => handleTabChange('database')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'database'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>قاعدة البيانات</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('audit')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'audit'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>سجل الحركات</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('system')}
+                className={`px-2 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                  activeTab === 'system'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Server className="w-3.5 h-3.5" />
+                <span>الخوادم</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* ── Tab 1: Overview & Fleet ────────────────────────────────────────── */}
@@ -541,7 +728,13 @@ export const AdminPage: React.FC = () => {
                   <Users className="w-4 h-4 text-amber-400" />
                   <span>طلبات انضمام المشتركين الجدد ({subscribers.length})</span>
                 </h3>
-                <span className="text-[10px] text-amber-400 font-bold">بانتظار الاعتماد</span>
+                <button
+                  onClick={() => handleTabChange('subscribers')}
+                  className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                >
+                  <span>خط الأنابيب بالكامل (Pipeline)</span>
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {subscribers.length === 0 ? (
@@ -592,19 +785,26 @@ export const AdminPage: React.FC = () => {
                   <MessageSquare className="w-4 h-4 text-amber-400" />
                   <span>رسائل واستفسارات اتصل بنا</span>
                 </h3>
-                <div className="flex gap-1 text-[10px]">
-                  {['all', 'new', 'in_progress', 'resolved'].map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => setContactFilter(st)}
-                      className={`px-2 py-1 rounded-md font-bold transition-all ${
-                        contactFilter === st ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {st === 'all' ? 'الكل' : st === 'new' ? 'جديد' : st === 'in_progress' ? 'قيد المتابعة' : 'محلول'}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  onClick={() => handleTabChange('contacts')}
+                  className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                >
+                  <span>عرض الكل</span>
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="flex gap-1 text-[10px]">
+                {['all', 'new', 'in_progress', 'resolved'].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setContactFilter(st)}
+                    className={`px-2 py-1 rounded-md font-bold transition-all ${
+                      contactFilter === st ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {st === 'all' ? 'الكل' : st === 'new' ? 'جديد' : st === 'in_progress' ? 'قيد المتابعة' : 'محلول'}
+                  </button>
+                ))}
               </div>
 
               {contacts.length === 0 ? (
@@ -720,6 +920,13 @@ export const AdminPage: React.FC = () => {
         </div>
       )}
 
+      {/* ── Tab: Subscribers Pipeline (Matching admin/subscribers/index.blade.php) */}
+      {activeTab === 'subscribers' && (
+        <div className="animate-fadeIn">
+          <SubscribersTab />
+        </div>
+      )}
+
       {/* ── Tab 3: Workspaces Management (Matching workspaces/index.blade.php) */}
       {activeTab === 'workspaces' && (
         <div className="space-y-6 animate-fadeIn">
@@ -806,15 +1013,23 @@ export const AdminPage: React.FC = () => {
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onClick={() => setSelectedWorkspaceForDetail(w.id)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                            title="فحص وإدارة شاملة للمتجر (show.blade.php)"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>إدارة</span>
+                          </button>
+                          <button
                             onClick={() => handleImpersonate(w.id)}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] font-bold transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] font-bold transition-colors cursor-pointer"
                             title="تسجيل الدخول كمالك المتجر"
                           >
                             دخول كمالك
                           </button>
                           <button
                             onClick={() => handleToggleWorkspaceStatus(w.id, w.status)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             {w.status === 'active' ? 'إيقاف' : 'تفعيل'}
                           </button>
@@ -926,6 +1141,18 @@ export const AdminPage: React.FC = () => {
                 </div>
               </form>
             </div>
+          )}
+
+          {/* Modal: Store Detail Deep Dive (Matching admin/workspaces/show.blade.php) */}
+          {selectedWorkspaceForDetail && (
+            <StoreDetailModal
+              workspaceId={selectedWorkspaceForDetail}
+              onClose={() => setSelectedWorkspaceForDetail(null)}
+              onRefresh={() => {
+                fetchWorkspaces();
+                fetchAdminData();
+              }}
+            />
           )}
         </div>
       )}
@@ -1155,6 +1382,13 @@ export const AdminPage: React.FC = () => {
               </form>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Tab: Contacts Inquiries Management (Matching admin/contacts/index.blade.php) */}
+      {activeTab === 'contacts' && (
+        <div className="animate-fadeIn">
+          <ContactsTab />
         </div>
       )}
 

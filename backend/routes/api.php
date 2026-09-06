@@ -105,6 +105,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('admin')->middleware(['super_admin'])->group(function () {
             Route::get('/overview', [ApiAdminController::class, 'overview']);
             Route::get('/subscribers', [ApiAdminController::class, 'subscribers']);
+            Route::post('/subscribers', [ApiAdminController::class, 'storeSubscriber']);
             Route::post('/subscribers/{id}/approve', [ApiAdminController::class, 'approveSubscriber']);
             Route::post('/subscribers/{id}/reject', [ApiAdminController::class, 'rejectSubscriber']);
             Route::get('/contacts', [ApiAdminController::class, 'contactMessages']);
@@ -115,9 +116,11 @@ Route::prefix('v1')->group(function () {
             // Workspaces Management
             Route::get('/workspaces', [ApiAdminController::class, 'workspaces']);
             Route::post('/workspaces', [ApiAdminController::class, 'storeWorkspace']);
+            Route::get('/workspaces/{id}', [ApiAdminController::class, 'showWorkspace']);
             Route::put('/workspaces/{id}', [ApiAdminController::class, 'updateWorkspace']);
             Route::delete('/workspaces/{id}', [ApiAdminController::class, 'deleteWorkspace']);
             Route::post('/workspaces/{id}/impersonate', [ApiAdminController::class, 'impersonateWorkspace']);
+            Route::post('/workspaces/switch', [ApiAdminController::class, 'switchWorkspace']);
 
             // Users Directory
             Route::get('/users', [ApiAdminController::class, 'users']);
