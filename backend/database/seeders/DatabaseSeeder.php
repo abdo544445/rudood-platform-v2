@@ -306,5 +306,8 @@ class DatabaseSeeder extends Seeder
                 'estimated_delivery' => 'تم الاستلام بنجاح من خزانة ريد بوكس',
             ]
         );
+
+        // ── 9. Seed Public Knowledge Hub Articles ─────────────────────────────
+        $this->call(ArticleSeeder::class);
     }
 }
