@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => {
     bot: null,
     token: savedToken,
     isAuthenticated: !!savedToken,
-    isLoading: !!savedToken,
+    isLoading: false,
 
     login: (token, user, workspace, bot) => {
       localStorage.setItem('rudood_token', token);

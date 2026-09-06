@@ -15,9 +15,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAdmin = f
     }
   }, [user, isAuthenticated, fetchUser]);
 
-  if (isLoading) {
+  if (isLoading && !user) {
     return (
-      <div className="min-h-screen bg-[#080d19] flex items-center justify-center">
+      <div className="min-h-screen bg-[#080d19] flex items-center justify-center font-['Cairo',sans-serif]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
           <span className="text-slate-400 text-sm font-medium">جاري التحقق من الجلسة...</span>
