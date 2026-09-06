@@ -74,15 +74,29 @@ export const ChannelsPage: React.FC = () => {
   }, []);
 
   const handleToggle = async (platform: string) => {
+    // Optimistic toggle in local state for instant feedback
+    setChannels((prev: any) => {
+      const current = prev[platform] || {};
+      return {
+        ...prev,
+        [platform]: {
+          ...current,
+          is_active: !current.is_active,
+        },
+      };
+    });
+
     try {
       soundEngine.playClick();
       const res = await apiClient.post(`/channels/${platform}/toggle`);
       if (res.data.success) {
+        soundEngine.playSuccess();
         toast.success(res.data.message || 'تم تحديث حالة القناة بنجاح ✓');
         fetchChannels();
       }
     } catch (e) {
       toast.error('تعذر تبديل حالة القناة');
+      fetchChannels(); // Revert back on error
     }
   };
 
@@ -90,14 +104,14 @@ export const ChannelsPage: React.FC = () => {
     setIsSaving(true);
     try {
       soundEngine.playClick();
-      const res = await apiClient.post('/channels/connect', { platform, ...payload });
+      const res = await apiClient.post(`/channels/${platform}/connect`, payload);
       if (res.data.success) {
         soundEngine.playSuccess();
         toast.success(res.data.message || 'تم حفظ وربط بيانات القناة بنجاح ✓');
         fetchChannels();
       }
-    } catch (e) {
-      toast.error('تعذر حفظ إعدادات القناة');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر حفظ إعدادات القناة');
     } finally {
       setIsSaving(false);
     }

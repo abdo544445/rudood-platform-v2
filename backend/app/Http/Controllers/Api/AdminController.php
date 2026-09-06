@@ -634,6 +634,46 @@ class AdminController extends BaseApiController
     }
 
     /**
+     * Update user details (Name, Email, Phone, Role, Workspace).
+     */
+    public function updateUser(Request $request, int $id): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|max:255|unique:users,email,' . $id,
+            'phone'        => 'nullable|string|max:50',
+            'role'         => 'required|in:owner,agent,admin',
+            'workspace_id' => 'nullable|exists:workspaces,id',
+        ]);
+
+        $user->update($validated);
+
+        return $this->success($user, 'تم تحديث بيانات المستخدم بنجاح ✓');
+    }
+
+    /**
+     * Reset user password by Super Admin.
+     */
+    public function resetUserPassword(Request $request, int $id): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $request->validate([
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return $this->success(null, "تم إعادة تعيين كلمة مرور المستخدم «{$user->name}» بنجاح ✓");
+    }
+
+    /**
      * Delete user account.
      */
     public function deleteUser(int $id): JsonResponse

@@ -124,7 +124,9 @@ Route::prefix('v1')->group(function () {
 
             // Users Directory
             Route::get('/users', [ApiAdminController::class, 'users']);
+            Route::put('/users/{id}', [ApiAdminController::class, 'updateUser']);
             Route::put('/users/{id}/role', [ApiAdminController::class, 'updateUserRole']);
+            Route::post('/users/{id}/reset-password', [ApiAdminController::class, 'resetUserPassword']);
             Route::delete('/users/{id}', [ApiAdminController::class, 'deleteUser']);
 
             // Database Explorer & Query Runner

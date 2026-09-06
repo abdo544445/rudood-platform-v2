@@ -21,8 +21,12 @@ import {
   RotateCcw,
   Server,
   Eye,
-  ChevronLeft
+  ChevronLeft,
+  Key,
+  Edit
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { soundEngine } from '../../services/soundEngine';
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -104,10 +108,21 @@ export const AdminPage: React.FC = () => {
     password: '',
   });
 
+  // Edit Workspace Modal State
+  const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<any>(null);
+
   // Users Tab State
   const [usersList, setUsersList] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('');
+
+  // Edit User & Reset Password Modal State
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [resetPassModalOpen, setResetPassModalOpen] = useState(false);
+  const [resetPassUser, setResetPassUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   // Articles Tab State
   const [articlesList, setArticlesList] = useState<any[]>([]);
@@ -214,26 +229,57 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  const handleToggleWorkspaceStatus = async (id: number, currentStatus: string) => {
-    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
+  const handleToggleWorkspaceStatus = async (id: number, targetStatus: string) => {
     try {
-      await apiClient.put(`/admin/workspaces/${id}`, { status: nextStatus });
-      fetchWorkspaces();
-    } catch (e) {
-      alert('تعذر تحديث حالة المتجر');
+      soundEngine.playClick();
+      const res = await apiClient.put(`/admin/workspaces/${id}`, { status: targetStatus });
+      if (res.data.success) {
+        soundEngine.playSuccess();
+        toast.success(targetStatus === 'active' ? 'تم تنشيط المتجر بنجاح ✓' : targetStatus === 'suspended' ? 'تم إيقاف المتجر مؤقتاً ⏸' : 'تم تفعيل الوضع التجريبي للمتجر');
+        fetchWorkspaces();
+        fetchAdminData();
+      }
+    } catch (e: any) {
+      toast.error('تعذر تحديث حالة المتجر');
+    }
+  };
+
+  const handleUpdateWorkspace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorkspace) return;
+    try {
+      soundEngine.playClick();
+      const res = await apiClient.put(`/admin/workspaces/${editingWorkspace.id}`, {
+        company_name: editingWorkspace.company_name,
+        plan_id: editingWorkspace.plan_id,
+        status: editingWorkspace.status,
+      });
+      if (res.data.success) {
+        soundEngine.playSuccess();
+        toast.success('تم تحديث بيانات المتجر بنجاح ✓');
+        setEditWorkspaceModalOpen(false);
+        setEditingWorkspace(null);
+        fetchWorkspaces();
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر تعديل بيانات المتجر');
     }
   };
 
   const handleImpersonate = async (id: number) => {
     try {
+      soundEngine.playClick();
       const res = await apiClient.post(`/admin/workspaces/${id}/impersonate`);
       if (res.data.success) {
-        alert(`${res.data.message}\nسيتم نقلك للوحة تحكم المتجر.`);
+        soundEngine.playSuccess();
+        toast.success(res.data.message || 'تم تسجيل الدخول كمالك المتجر');
         localStorage.setItem('auth_token', res.data.data.token);
-        window.location.href = '/dashboard';
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 600);
       }
-    } catch (e) {
-      alert('تعذر تسجيل الدخول كمالك المتجر');
+    } catch (e: any) {
+      toast.error('تعذر تسجيل الدخول كمالك المتجر');
     }
   };
 
@@ -249,11 +295,72 @@ export const AdminPage: React.FC = () => {
 
   const handleUpdateRole = async (userId: number, role: string) => {
     try {
+      soundEngine.playClick();
       await apiClient.put(`/admin/users/${userId}/role`, { role });
-      alert('تم تحديث دور المستخدم بنجاح ✓');
+      soundEngine.playSuccess();
+      toast.success('تم تحديث دور المستخدم بنجاح ✓');
       fetchUsers();
     } catch (e) {
-      alert('تعذر تحديث الدور');
+      toast.error('تعذر تحديث الدور');
+    }
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      soundEngine.playClick();
+      const res = await apiClient.put(`/admin/users/${editingUser.id}`, {
+        name: editingUser.name,
+        email: editingUser.email,
+        phone: editingUser.phone,
+        role: editingUser.role,
+        workspace_id: editingUser.workspace_id,
+      });
+      if (res.data.success) {
+        soundEngine.playSuccess();
+        toast.success('تم تحديث بيانات المستخدم بنجاح ✓');
+        setEditUserModalOpen(false);
+        setEditingUser(null);
+        fetchUsers();
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر تحديث المستخدم');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPassUser || !newPassword) return;
+    try {
+      soundEngine.playClick();
+      const res = await apiClient.post(`/admin/users/${resetPassUser.id}/reset-password`, {
+        password: newPassword,
+      });
+      if (res.data.success) {
+        soundEngine.playSuccess();
+        toast.success(res.data.message || 'تم تحديث كلمة المرور بنجاح ✓');
+        setResetPassModalOpen(false);
+        setResetPassUser(null);
+        setNewPassword('');
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر تعيين كلمة المرور');
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    if (!window.confirm(`هل أنت متأكد من حذف حساب «${userName}» نهائياً؟`)) return;
+    try {
+      soundEngine.playClick();
+      const res = await apiClient.delete(`/admin/users/${userId}`);
+      if (res.data.success) {
+        soundEngine.playSuccess();
+        toast.success('تم حذف حساب المستخدم بنجاح');
+        fetchUsers();
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر حذف الحساب');
     }
   };
 
@@ -1004,34 +1111,59 @@ export const AdminPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-mono">{w.conversations_count || 0}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
-                          w.status === 'active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                        }`}>
-                          {w.status === 'active' ? 'نشط' : 'موقوف'}
-                        </span>
+                        <select
+                          value={w.status}
+                          onChange={(e) => handleToggleWorkspaceStatus(w.id, e.target.value)}
+                          className={`px-2.5 py-1 rounded-full font-bold text-[10px] bg-slate-950 border focus:outline-none cursor-pointer ${
+                            w.status === 'active'
+                              ? 'text-emerald-300 border-emerald-500/30'
+                              : w.status === 'suspended'
+                              ? 'text-rose-300 border-rose-500/30'
+                              : 'text-amber-300 border-amber-500/30'
+                          }`}
+                        >
+                          <option value="active" className="bg-slate-900 text-emerald-300">نشط (Active)</option>
+                          <option value="suspended" className="bg-slate-900 text-rose-300">موقوف (Suspended)</option>
+                          <option value="trial" className="bg-slate-900 text-amber-300">تجريبي (Trial)</option>
+                        </select>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => setSelectedWorkspaceForDetail(w.id)}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                            title="فحص وإدارة شاملة للمتجر (show.blade.php)"
+                            className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                            title="فحص وإدارة شاملة للمتجر"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>إدارة</span>
                           </button>
                           <button
+                            onClick={() => {
+                              setEditingWorkspace({ ...w });
+                              setEditWorkspaceModalOpen(true);
+                            }}
+                            className="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-white/5 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                            title="تعديل بيانات المتجر والباقة"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>تعديل</span>
+                          </button>
+                          <button
                             onClick={() => handleImpersonate(w.id)}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] font-bold transition-colors cursor-pointer"
+                            className="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] font-bold transition-colors cursor-pointer"
                             title="تسجيل الدخول كمالك المتجر"
                           >
                             دخول كمالك
                           </button>
                           <button
                             onClick={() => handleToggleWorkspaceStatus(w.id, w.status)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold transition-colors cursor-pointer"
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer border ${
+                              w.status === 'active'
+                                ? 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                                : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                            }`}
                           >
-                            {w.status === 'active' ? 'إيقاف' : 'تفعيل'}
+                            {w.status === 'active' ? 'تعليق ⏸' : 'تفعيل ✓'}
                           </button>
                         </div>
                       </td>
@@ -1143,6 +1275,72 @@ export const AdminPage: React.FC = () => {
             </div>
           )}
 
+          {/* Modal: Edit Workspace */}
+          {editWorkspaceModalOpen && editingWorkspace && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <form onSubmit={handleUpdateWorkspace} className="bg-[#0b1120] border border-amber-500/30 p-8 rounded-3xl max-w-lg w-full space-y-4 shadow-2xl">
+                <h3 className="text-base font-black text-white flex items-center gap-2 pb-3 border-b border-white/10">
+                  <Edit className="w-5 h-5 text-amber-400" />
+                  <span>تعديل متجر: {editingWorkspace.company_name}</span>
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">اسم المتجر / الشركة</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingWorkspace.company_name}
+                    onChange={(e) => setEditingWorkspace({ ...editingWorkspace, company_name: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">الباقة</label>
+                    <select
+                      value={editingWorkspace.plan_id}
+                      onChange={(e) => setEditingWorkspace({ ...editingWorkspace, plan_id: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    >
+                      <option value="starter">Starter ($19)</option>
+                      <option value="pro">Pro ($49)</option>
+                      <option value="enterprise">Enterprise ($99)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">حالة الحساب</label>
+                    <select
+                      value={editingWorkspace.status}
+                      onChange={(e) => setEditingWorkspace({ ...editingWorkspace, status: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    >
+                      <option value="active">نشطة (Active)</option>
+                      <option value="suspended">إيقاف مؤقت (Suspended)</option>
+                      <option value="trial">فترة تجريبية (Trial)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditWorkspaceModalOpen(false);
+                      setEditingWorkspace(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                  <button type="submit" className="px-5 py-2 rounded-xl gold-btn text-xs font-bold cursor-pointer">
+                    حفظ التغييرات ✓
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
           {/* Modal: Store Detail Deep Dive (Matching admin/workspaces/show.blade.php) */}
           {selectedWorkspaceForDetail && (
             <StoreDetailModal
@@ -1209,28 +1407,188 @@ export const AdminPage: React.FC = () => {
                     <td className="py-3 px-4 text-[11px] text-slate-400">{u.email}</td>
                     <td className="py-3 px-4 font-bold text-amber-400">{u.workspace?.company_name || 'المنصة العامة'}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
-                        u.role === 'admin' ? 'bg-purple-500/20 text-purple-300' : u.role === 'owner' ? 'bg-amber-500/20 text-amber-300' : 'bg-sky-500/20 text-sky-300'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
                       <select
                         value={u.role}
                         onChange={(e) => handleUpdateRole(u.id, e.target.value)}
-                        className="bg-slate-950 border border-white/10 rounded-lg p-1 text-[10px] text-slate-200"
+                        className={`px-2.5 py-1 rounded-full font-bold text-[10px] bg-slate-950 border focus:outline-none cursor-pointer ${
+                          u.role === 'admin' ? 'text-purple-300 border-purple-500/30' : u.role === 'owner' ? 'text-amber-300 border-amber-500/30' : 'text-sky-300 border-sky-500/30'
+                        }`}
                       >
-                        <option value="owner">مالك (Owner)</option>
-                        <option value="agent">وكيل (Agent)</option>
-                        <option value="admin">مدير (Admin)</option>
+                        <option value="owner" className="bg-slate-900 text-amber-300">مالك (Owner)</option>
+                        <option value="agent" className="bg-slate-900 text-sky-300">وكيل (Agent)</option>
+                        <option value="admin" className="bg-slate-900 text-purple-300">مدير (Admin)</option>
                       </select>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setEditingUser({ ...u });
+                            setEditUserModalOpen(true);
+                          }}
+                          className="px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 border border-sky-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                          title="تعديل بيانات المستخدم"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>تعديل</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setResetPassUser({ ...u });
+                            setNewPassword('');
+                            setResetPassModalOpen(true);
+                          }}
+                          className="px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 border border-amber-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                          title="إعادة تعيين كلمة المرور"
+                        >
+                          <Key className="w-3 h-3" />
+                          <span>كلمة المرور</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(u.id, u.name)}
+                          className="px-2 py-1 rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30 text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                          title="حذف الحساب"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Modal: Edit User */}
+          {editUserModalOpen && editingUser && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <form onSubmit={handleUpdateUser} className="bg-[#0b1120] border border-amber-500/30 p-8 rounded-3xl max-w-lg w-full space-y-4 shadow-2xl">
+                <h3 className="text-base font-black text-white flex items-center gap-2 pb-3 border-b border-white/10">
+                  <Edit className="w-5 h-5 text-amber-400" />
+                  <span>تعديل بيانات المستخدم: {editingUser.name}</span>
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">الاسم الكامل</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingUser.name}
+                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">البريد الإلكتروني</label>
+                    <input
+                      type="email"
+                      required
+                      value={editingUser.email}
+                      onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">رقم الهاتف</label>
+                    <input
+                      type="text"
+                      value={editingUser.phone || ''}
+                      onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">الدور والصلاحية</label>
+                    <select
+                      value={editingUser.role}
+                      onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    >
+                      <option value="owner">مالك متجر (Owner)</option>
+                      <option value="agent">موظف دعم (Agent)</option>
+                      <option value="admin">مدير نظام (Admin)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">المتجر / الشركة التابع لها</label>
+                    <select
+                      value={editingUser.workspace_id || ''}
+                      onChange={(e) => setEditingUser({ ...editingUser, workspace_id: e.target.value ? Number(e.target.value) : null })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                    >
+                      <option value="">-- بدون مساحة عمل --</option>
+                      {workspaces.map((w) => (
+                        <option key={w.id} value={w.id}>{w.company_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditUserModalOpen(false);
+                      setEditingUser(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                  <button type="submit" className="px-5 py-2 rounded-xl gold-btn text-xs font-bold cursor-pointer">
+                    حفظ التغييرات ✓
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Modal: Reset Password */}
+          {resetPassModalOpen && resetPassUser && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <form onSubmit={handleResetPassword} className="bg-[#0b1120] border border-amber-500/30 p-8 rounded-3xl max-w-md w-full space-y-4 shadow-2xl">
+                <h3 className="text-base font-black text-white flex items-center gap-2 pb-3 border-b border-white/10">
+                  <Key className="w-5 h-5 text-amber-400" />
+                  <span>تعيين كلمة مرور لـ: {resetPassUser.name}</span>
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">كلمة المرور الجديدة (6 أحرف على الأقل)</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور الجديدة"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetPassModalOpen(false);
+                      setResetPassUser(null);
+                      setNewPassword('');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                  <button type="submit" className="px-5 py-2 rounded-xl gold-btn text-xs font-bold cursor-pointer">
+                    تحديث كلمة المرور ✓
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
