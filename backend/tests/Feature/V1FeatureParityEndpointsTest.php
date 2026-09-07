@@ -128,7 +128,7 @@ class V1FeatureParityEndpointsTest extends TestCase
             'match_type'   => 'contains',
         ]);
 
-        $createResponse->assertStatus(200)
+        $createResponse->assertStatus(201)
                        ->assertJson(['success' => true]);
 
         $rule = AutoRule::where('workspace_id', $this->workspace->id)->first();
