@@ -43,6 +43,8 @@ import { apiClient } from '../../services/apiClient';
 import { SubscribersTab } from './components/SubscribersTab';
 import { ContactsTab } from './components/ContactsTab';
 import { StoreDetailModal } from './components/StoreDetailModal';
+import { MaintenanceButton } from '../../components/common/MaintenanceButton';
+import { useMaintenanceStore } from '../../store/useMaintenanceStore';
 
 export type AdminTabKey = 
   | 'overview' 
@@ -86,10 +88,10 @@ export const AdminPage: React.FC = () => {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
   const [contactFilter, setContactFilter] = useState('all');
-  const [isMaintenance, setIsMaintenance] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState('');
-  const [maintenanceEndsAt, setMaintenanceEndsAt] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Maintenance state from centralized Zustand store (modal is in Header)
+  const { maintenance, fetchStatus: fetchMaintenanceStatus } = useMaintenanceStore();
 
   // Statistics Telemetry
   const [statsData, setStatsData] = useState<any>(null);
@@ -160,9 +162,8 @@ export const AdminPage: React.FC = () => {
 
       if (overRes.data.success) {
         setOverview(overRes.data.data);
-        setIsMaintenance(overRes.data.data.is_maintenance || false);
-        setMaintenanceMessage(overRes.data.data.maintenance_details?.message || '');
-        setMaintenanceEndsAt(overRes.data.data.maintenance_details?.scheduled_ends_at || '');
+        // Sync maintenance status to the centralized store as well
+        fetchMaintenanceStatus();
       }
       if (subRes.data.success) setSubscribers(subRes.data.data.requests || []);
       if (contRes.data.success) setContacts(contRes.data.data.messages || []);
@@ -402,7 +403,7 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  // Database Explorer Actions
+  // Database Explorer Actions // Maintenance managed from Header's MaintenanceControlModal (via useMaintenanceStore)
   const handleExecuteSql = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sqlQuery.trim()) return;
@@ -419,20 +420,6 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  // Maintenance & System
-  const handleToggleMaintenance = async () => {
-    try {
-      const res = await apiClient.post('/admin/maintenance/toggle', {
-        is_active: !isMaintenance,
-        message: maintenanceMessage,
-        scheduled_end: maintenanceEndsAt,
-      });
-      alert(res.data.message);
-      setIsMaintenance(!isMaintenance);
-    } catch (e) {
-      alert('تعذر تبديل وضع الصيانة');
-    }
-  };
 
   const handleClearCache = async () => {
     try {
@@ -500,49 +487,9 @@ export const AdminPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Global Maintenance Toggle */}
-        <div className="flex-1 max-w-md bg-slate-950/80 p-4 rounded-2xl border border-rose-500/10 shadow-inner ml-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="text-sm font-black text-white flex items-center gap-2">
-                وضع الصيانة العام
-                {isMaintenance && <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] uppercase">نشط حالياً</span>}
-              </div>
-              <div className="text-[10px] text-slate-400">إيقاف المنصة لجميع المستخدمين عدا مدراء النظام.</div>
-            </div>
-            <button
-              onClick={handleToggleMaintenance}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-xs ${
-                isMaintenance
-                  ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)] hover:bg-rose-600'
-                  : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <Power className="w-3.5 h-3.5" />
-              <span>{isMaintenance ? 'إنهاء الصيانة' : 'تفعيل الصيانة'}</span>
-            </button>
-          </div>
-          
-          <div className="space-y-2 pt-2 border-t border-white/5">
-            <div>
-              <input
-                type="text"
-                value={maintenanceMessage}
-                onChange={(e) => setMaintenanceMessage(e.target.value)}
-                placeholder="رسالة الصيانة التي تظهر للزوار..."
-                className="w-full bg-slate-900 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-400 whitespace-nowrap">ينتهي في:</span>
-              <input
-                type="datetime-local"
-                value={maintenanceEndsAt}
-                onChange={(e) => setMaintenanceEndsAt(e.target.value)}
-                className="flex-1 bg-slate-900 border border-white/5 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-amber-500/50"
-              />
-            </div>
-          </div>
+        {/* Maintenance Mode Status — opens full modal via Header button */}
+        <div className="flex items-center gap-3 ml-auto">
+          <MaintenanceButton />
         </div>
       </div>
 

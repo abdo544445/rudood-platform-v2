@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, Power, MessageSquare, Search } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useMaintenanceStore } from '../../store/useMaintenanceStore';
 import { apiClient } from '../../services/apiClient';
 import { CommandPalette } from '../common/CommandPalette';
+import { MaintenanceButton } from '../common/MaintenanceButton';
+import { MaintenanceControlModal } from '../common/MaintenanceControlModal';
 
 export const Header: React.FC = () => {
-  const { bot, workspace, updateBotStatus } = useAuthStore();
+  const { bot, workspace, user, updateBotStatus } = useAuthStore();
+  const { fetchStatus } = useMaintenanceStore();
   const [isToggling, setIsToggling] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const isSuperAdmin = user?.is_super_admin || user?.role === 'super_admin' || user?.role === 'admin';
+
+  // Fetch maintenance status on mount (for super admins to display current state)
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetchStatus();
+    }
+  }, [isSuperAdmin]);
 
   // Global Cmd + K key listener
   useEffect(() => {
@@ -65,8 +78,14 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Bot Status Toggle & Persona */}
-        <div className="flex items-center gap-4">
+        {/* Right Side: Maintenance Toggle (Super Admin Only) + Bot Status + Persona */}
+        <div className="flex items-center gap-3">
+          {/* ── Maintenance Mode Button (Super Admin Only) ─────────────────────── */}
+          {isSuperAdmin && (
+            <MaintenanceButton showIconOnlyOnMobile={true} />
+          )}
+
+          {/* Bot Status Toggle */}
           <button
             onClick={handleToggleBot}
             disabled={isToggling}
@@ -94,6 +113,9 @@ export const Header: React.FC = () => {
 
       {/* Global Command Palette Modal */}
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+
+      {/* Maintenance Control Modal (Super Admin Only) */}
+      {isSuperAdmin && <MaintenanceControlModal />}
     </>
   );
 };

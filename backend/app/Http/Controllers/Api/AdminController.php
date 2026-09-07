@@ -385,18 +385,27 @@ class AdminController extends BaseApiController
         if ($err = $this->checkSuperAdmin()) return $err;
 
         $isActive = $request->boolean('is_active');
-        $message  = $request->get('message', 'نظام منصة ردود قيد الصيانة المجدولة حالياً لتحديث وتحسين الخدمات.');
-        $endsAt   = $request->get('scheduled_end');
+        $title    = $request->get('title');
+        $message  = $request->get('message');
+        $endsAt   = $request->get('scheduled_ends_at') ?? $request->get('scheduled_end');
 
-        SystemSetting::setMaintenance($isActive, [
-            'message' => $message,
-            'scheduled_ends_at' => $endsAt
-        ]);
+        $params = [
+            'scheduled_ends_at' => $endsAt,
+        ];
+        if (!empty($title)) {
+            $params['title'] = $title;
+        }
+        if (!empty($message)) {
+            $params['message'] = $message;
+        }
+
+        $saved = SystemSetting::setMaintenance($isActive, $params);
 
         return $this->success([
-            'is_maintenance' => $isActive,
-            'message'        => $message,
-            'scheduled_end'  => $endsAt,
+            'is_maintenance'    => $isActive,
+            'title'             => $saved['title'] ?? $title,
+            'message'           => $saved['message'] ?? $message,
+            'scheduled_ends_at' => $saved['scheduled_ends_at'] ?? $endsAt,
         ], $isActive ? 'تم تفعيل وضع الصيانة العام للمنصة ⚠️' : 'تم إنهاء وضع الصيانة واستئناف التشغيل الطبيعي ✓');
     }
 
