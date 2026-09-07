@@ -196,9 +196,10 @@ export const PlaygroundPage: React.FC = () => {
                 onChange={(e) => setParams({ ...params, ai_provider: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200"
               >
-                <option value="gemini">Google Gemini 2.0</option>
-                <option value="openai">OpenAI ChatGPT</option>
-                <option value="anthropic">Anthropic Claude 3.5</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+                <option value="openai_compatible">Custom Endpoint</option>
               </select>
             </div>
 

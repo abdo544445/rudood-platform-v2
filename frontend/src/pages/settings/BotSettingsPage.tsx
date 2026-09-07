@@ -379,12 +379,12 @@ export const BotSettingsPage: React.FC = () => {
               <span>مزود ونموذج الذكاء الاصطناعي</span>
             </h4>
 
-            {/* Provider 2x2 Grid (Exact Order & Style from Screenshot) */}
+            {/* Provider 2x2 Grid (Exact Provider Names) */}
             <div className="grid grid-cols-2 gap-2.5">
               {[
                 { id: 'gemini', label: 'Google Gemini' },
-                { id: 'openai', label: 'OpenAI GPT-4o' },
-                { id: 'anthropic', label: 'Claude 3.5' },
+                { id: 'openai', label: 'OpenAI' },
+                { id: 'anthropic', label: 'Anthropic' },
                 { id: 'openai_compatible', label: 'Custom Endpoint' },
               ].map((p) => {
                 const isSelected = formData.ai_provider === p.id;
