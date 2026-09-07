@@ -16,8 +16,10 @@ import { soundEngine } from '../../services/soundEngine';
 import { SpotlightCard } from '../../components/common/SpotlightCard';
 import { PhoneSimulator, type ChannelPlatform } from '../../components/common/PhoneSimulator';
 import { TelegramIcon } from '../../components/icons/TelegramIcon';
+import { WhatsAppConfigModal } from './components/WhatsAppConfigModal';
 
 export const ChannelsPage: React.FC = () => {
+  const [showWaCatalog, setShowWaCatalog] = useState(false);
   const [channels, setChannels] = useState<any>({});
   const [showSimulator, setShowSimulator] = useState(false);
   const [selectedSimulatorPlatform] = useState<ChannelPlatform>('whatsapp');
@@ -297,13 +299,21 @@ export const ChannelsPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-between items-center pt-1">
+              <button 
+                type="button" 
+                onClick={() => setShowWaCatalog(true)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-white/10 text-slate-300 transition-all flex items-center gap-1.5"
+              >
+                إعدادات الكتالوج التفاعلية (Catalog)
+              </button>
               <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-xl gold-btn text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                 <Save className="w-3.5 h-3.5" />
                 <span>حفظ إعدادات واتساب</span>
               </button>
             </div>
           </form>
+          {showWaCatalog && <WhatsAppConfigModal onClose={() => setShowWaCatalog(false)} />}
         </SpotlightCard>
 
         {/* 🔵 2. Telegram Bot Card */}
@@ -400,7 +410,7 @@ export const ChannelsPage: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl bg-slate-950/80 border border-white/5 text-[11px] text-slate-400 flex items-center justify-between">
-              <span>⚡ يمكنك إرسال رسالة للبوت في تليجرام ثم النقر على "فحص ومزامنة الرسائل ⚡" للرد الفوري.</span>
+              <span>⚡ يتم مزامنة رسائل تيليجرام والرد عليها تلقائياً عبر خدمة المزامنة الخلفية. يمكنك أيضاً الفحص يدوياً في أي وقت.</span>
             </div>
 
             <div className="flex justify-end pt-1">

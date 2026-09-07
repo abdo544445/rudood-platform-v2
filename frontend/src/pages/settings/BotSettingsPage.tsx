@@ -21,6 +21,7 @@ import { soundEngine } from '../../services/soundEngine';
 import { PhoneSimulator } from '../../components/common/PhoneSimulator';
 import { TokenMetrics } from '../../components/common/TokenMetrics';
 import { TelegramIcon } from '../../components/icons/TelegramIcon';
+import { IntegrationsTab } from './components/IntegrationsTab';
 
 export const BotSettingsPage: React.FC = () => {
   const { bot, fetchUser } = useAuthStore();
@@ -655,8 +656,8 @@ export const BotSettingsPage: React.FC = () => {
         {showSimulator && (
           <div className="xl:col-span-3 flex flex-col items-center sticky top-24 self-start">
             <div className="w-full text-center mb-3">
-              <span className="text-xs font-bold text-amber-300">📱 المعاينة التفاعلية المباشرة</span>
-              <p className="text-[10px] text-slate-400">تحديث فوري لاسم المساعد والنبرة والرسائل</p>
+              <span className="text-sm font-black text-amber-400 block">📱 المعاينة التفاعلية المباشرة</span>
+              <p className="text-xs text-slate-400 mt-0.5 font-medium">تحديث فوري لاسم المساعد والنبرة والرسائل</p>
             </div>
             <PhoneSimulator
               botName={formData.name || 'مساعد المتجر الذكي'}
@@ -666,6 +667,10 @@ export const BotSettingsPage: React.FC = () => {
           </div>
         )}
 
+      </div>
+
+      <div className="pt-8 border-t border-white/5">
+        <IntegrationsTab />
       </div>
 
     </div>

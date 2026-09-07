@@ -268,10 +268,10 @@ export const SubscribersTab: React.FC = () => {
                             title="فتح محادثة واتساب مباشرة مع التاجر"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
-                            <span>{sub.phone || 'واتساب'}</span>
+                            <span dir="ltr">{sub.phone || 'واتساب'}</span>
                           </a>
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-1 font-mono">{sub.email}</div>
+                        <div className="text-[11px] text-slate-400 mt-1 font-mono" dir="ltr">{sub.email}</div>
                       </td>
 
                       {/* Plan */}

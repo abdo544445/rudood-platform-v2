@@ -215,10 +215,10 @@ export const ContactsTab: React.FC = () => {
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 transition-colors"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
-                            <span>{msg.phone}</span>
+                            <span dir="ltr">{msg.phone}</span>
                           </a>
                         ) : (
-                          <span className="text-slate-400">{msg.phone || '—'}</span>
+                          <span className="text-slate-400" dir="ltr">{msg.phone || '—'}</span>
                         )}
                       </td>
 
@@ -295,7 +295,7 @@ export const ContactsTab: React.FC = () => {
               <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">المرسل: <span className="text-white font-bold">{selectedMessage.name}</span></span>
-                  <span className="text-amber-400 font-mono">{selectedMessage.phone}</span>
+                  <span className="text-amber-400 font-mono" dir="ltr">{selectedMessage.phone}</span>
                 </div>
                 <div className="text-slate-400">البريد: <span className="text-white font-mono">{selectedMessage.email}</span></div>
                 <div className="text-slate-400">التاريخ: <span className="text-white">{new Date(selectedMessage.created_at).toLocaleString('ar-SA')}</span></div>

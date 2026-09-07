@@ -24,6 +24,12 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['throttle:login'])->group(function () {
         Route::post('/auth/login', [ApiAuthController::class, 'login']);
         Route::post('/auth/register', [ApiAuthController::class, 'register']);
+        Route::get('/system/maintenance/status', function () {
+            return response()->json([
+                'success' => true,
+                'data' => \App\Models\SystemSetting::getMaintenanceDetails()
+            ]);
+        });
     });
     Route::post('/demo/simulate', [\App\Http\Controllers\Api\DemoSimulationController::class, 'simulate']);
 
@@ -110,6 +116,7 @@ Route::prefix('v1')->group(function () {
         // Dashboard & ROI Analytics
         Route::get('/dashboard/stats', [ApiDashboardController::class, 'stats']);
         Route::get('/dashboard/charts', [ApiDashboardController::class, 'charts']);
+        Route::get('/dashboard/export', [ApiDashboardController::class, 'exportCsv']);
 
         // Live Chat 2.0 & Inbox
         Route::get('/conversations', [ApiConversationController::class, 'index']);
@@ -131,6 +138,11 @@ Route::prefix('v1')->group(function () {
 
         // AI Playground Simulator
         Route::post('/playground/simulate', [ApiPlaygroundController::class, 'simulate']);
+        
+        // E-Commerce Store Integrations
+        Route::get('/integrations', [\App\Http\Controllers\Api\IntegrationController::class, 'index']);
+        Route::post('/integrations', [\App\Http\Controllers\Api\IntegrationController::class, 'store']);
+        Route::delete('/integrations/{provider}', [\App\Http\Controllers\Api\IntegrationController::class, 'destroy']);
 
         // Knowledge Base & RAG Vector Management
         Route::get('/knowledge-base/documents', [ApiKnowledgeBaseController::class, 'documents']);
@@ -148,6 +160,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/channels/{platform}/toggle', [ApiChannelController::class, 'toggle']);
         Route::post('/channels/{platform}/poll', [ApiChannelController::class, 'poll']);
         Route::match(['get', 'post', 'put'], '/channels/widget/config', [ApiChannelController::class, 'widgetConfig']);
+        
+        // WhatsApp Catalog & Interactive Messages
+        Route::get('/channels/whatsapp/catalog', [\App\Http\Controllers\Api\WhatsAppCatalogController::class, 'getCatalogConfig']);
+        Route::post('/channels/whatsapp/catalog', [\App\Http\Controllers\Api\WhatsAppCatalogController::class, 'saveCatalogConfig']);
+        Route::post('/channels/whatsapp/catalog/sync', [\App\Http\Controllers\Api\WhatsAppCatalogController::class, 'syncCatalog']);
 
         // Super Admin Management (Role Protected)
         Route::prefix('admin')->middleware(['super_admin'])->group(function () {

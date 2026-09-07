@@ -215,4 +215,54 @@ class DashboardController extends BaseApiController
             'monthly_trends' => $trends,
         ]);
     }
+
+    /**
+     * Export conversations data as CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $workspace = $this->workspace();
+        if (!$workspace) {
+            return $this->error('لم يتم العثور على مساحة عمل', 404);
+        }
+
+        $conversations = Conversation::with('customer')
+            ->where('workspace_id', $workspace->id)
+            ->latest()
+            ->take(100) // Limit for demo
+            ->get();
+
+        $csvFileName = 'conversations_export_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use($conversations) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($file, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+            
+            fputcsv($file, ['ID', 'Customer', 'Phone', 'Platform', 'Status', 'Created At']);
+
+            foreach ($conversations as $conv) {
+                fputcsv($file, [
+                    $conv->id,
+                    $conv->customer->name ?? 'Unknown',
+                    $conv->customer->phone ?? 'N/A',
+                    $conv->platform,
+                    $conv->status,
+                    $conv->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

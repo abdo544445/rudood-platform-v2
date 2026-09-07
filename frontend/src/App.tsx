@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { socketService } from './services/socketService';
+import { useAuthStore } from './store/useAuthStore';
 
 // Public Marketing Pages
 import { HomePage } from './pages/public/HomePage';
@@ -15,6 +16,8 @@ import { ContactPage } from './pages/public/ContactPage';
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { WaitingApprovalPage } from './pages/auth/WaitingApprovalPage';
+import { MaintenancePage } from './pages/public/MaintenancePage';
 
 // Layout & Route Guards
 import { AppLayout } from './components/layout/AppLayout';
@@ -30,9 +33,29 @@ import { ChannelsPage } from './pages/channels/ChannelsPage';
 import { AdminPage } from './pages/admin/AdminPage';
 
 export const App: React.FC = () => {
+  const [maintenance, setMaintenance] = React.useState<any>(null);
+  const user = useAuthStore(state => state.user);
+
   useEffect(() => {
     socketService.init();
+    
+    // Check maintenance status
+    fetch('http://localhost:8000/api/v1/system/maintenance/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data?.is_active) {
+          setMaintenance(data.data);
+        }
+      })
+      .catch(console.error);
   }, []);
+
+  // Block access if maintenance is active, UNLESS user is Super Admin or trying to login
+  if (maintenance && !user?.is_super_admin) {
+    if (window.location.pathname !== '/login') {
+      return <MaintenancePage maintenance={maintenance} />;
+    }
+  }
 
   return (
     <BrowserRouter>
@@ -66,6 +89,7 @@ export const App: React.FC = () => {
         {/* ── Authentication Routes ────────────────────────────────────────── */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/waiting-approval" element={<WaitingApprovalPage />} />
 
         {/* ── Protected Merchant & Admin Application Routes ────────────────── */}
         <Route element={<ProtectedRoute />}>

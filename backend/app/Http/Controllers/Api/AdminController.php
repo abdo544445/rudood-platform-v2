@@ -129,6 +129,7 @@ class AdminController extends BaseApiController
             'pending_leads'      => SubscriberRequest::where('status', 'pending')->count(),
             'new_inquiries'      => ContactMessage::where('status', 'new')->count(),
             'is_maintenance'     => SystemSetting::isMaintenanceActive(),
+            'maintenance_details'=> SystemSetting::getMaintenanceDetails(),
             'chart_7days'        => [
                 'labels'       => $chartLabels,
                 'bot_series'   => $botSeries,
@@ -387,7 +388,10 @@ class AdminController extends BaseApiController
         $message  = $request->get('message', 'نظام منصة ردود قيد الصيانة المجدولة حالياً لتحديث وتحسين الخدمات.');
         $endsAt   = $request->get('scheduled_end');
 
-        SystemSetting::setMaintenanceMode($isActive, $message, $endsAt);
+        SystemSetting::setMaintenance($isActive, [
+            'message' => $message,
+            'scheduled_ends_at' => $endsAt
+        ]);
 
         return $this->success([
             'is_maintenance' => $isActive,

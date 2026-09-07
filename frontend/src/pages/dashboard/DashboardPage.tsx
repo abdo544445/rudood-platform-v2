@@ -15,7 +15,8 @@ import {
   ShoppingBag,
   Activity,
   RefreshCw,
-  ChevronLeft
+  ChevronLeft,
+  Download
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -68,6 +69,22 @@ export const DashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      soundEngine.playClick();
+      const res = await apiClient.get('/dashboard/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `conversations_export.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      toast.error('فشل تصدير البيانات إلى CSV');
     }
   };
 
@@ -156,6 +173,16 @@ export const DashboardPage: React.FC = () => {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">تحديث</span>
+          </button>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCsv}
+            title="تصدير البيانات بصيغة CSV"
+            className="p-2.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">تصدير CSV</span>
           </button>
 
           {/* Bot Live Status Pill */}

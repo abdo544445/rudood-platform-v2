@@ -28,9 +28,8 @@ export const RegisterPage: React.FC = () => {
     try {
       const res = await apiClient.post('/auth/register', formData);
       if (res.data.success) {
-        const { token, user, workspace, bot } = res.data.data;
-        login(token, user, workspace, bot);
-        navigate('/dashboard');
+        // Registration is pending approval, no token is issued yet
+        navigate('/waiting-approval', { state: { email: res.data.data.email, message: res.data.message } });
       } else {
         setError(res.data.message || 'فشل إنشاء الحساب');
       }

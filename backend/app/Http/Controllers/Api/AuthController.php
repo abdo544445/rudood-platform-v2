@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\Bot;
+use App\Models\SubscriberRequest;
 
 class AuthController extends BaseApiController
 {
@@ -86,7 +87,7 @@ class AuthController extends BaseApiController
             $workspace = Workspace::create([
                 'company_name'                 => $validated['company_name'],
                 'plan_id'                      => $plan,
-                'status'                       => 'active',
+                'status'                       => 'pending',
                 'monthly_messages_limit'       => match ($plan) {
                     'enterprise'   => 10000,
                     'professional' => 3000,
@@ -116,23 +117,21 @@ class AuthController extends BaseApiController
                 'is_active'       => true,
             ]);
 
-            $token = $user->createToken('react_spa_' . time())->plainTextToken;
+            SubscriberRequest::create([
+                'name'            => $validated['name'],
+                'email'           => $validated['email'],
+                'phone'           => $validated['phone'] ?? null,
+                'company_name'    => $validated['company_name'],
+                'selected_plan'   => $plan,
+                'notes'           => 'طلب تسجيل ذاتي جديد - بانتظار اعتماد الإدارة',
+                'status'          => 'pending',
+                'created_user_id' => $user->id,
+            ]);
 
             return $this->success([
-                'token'     => $token,
-                'token_type'=> 'Bearer',
-                'user'      => [
-                    'id'           => $user->id,
-                    'name'         => $user->name,
-                    'email'        => $user->email,
-                    'role'         => $user->role,
-                    'is_admin'     => $user->isAdmin(),
-                    'is_super_admin' => $user->isSuperAdmin(),
-                    'workspace_id' => $user->workspace_id,
-                ],
-                'workspace' => $workspace,
-                'bot'       => $bot,
-            ], 'تم إنشاء حسابك وتفعيل مساحة العمل بنجاح ✓', 201);
+                'status' => 'pending',
+                'email'  => $user->email,
+            ], 'تم استلام طلب تسجيل متجرك بنجاح! حسابك الآن قيد المراجعة والاعتماد من قبل مدير النظام.', 201);
         });
     }
 

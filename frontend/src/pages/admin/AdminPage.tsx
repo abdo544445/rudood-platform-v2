@@ -87,6 +87,8 @@ export const AdminPage: React.FC = () => {
   const [contacts, setContacts] = useState<any[]>([]);
   const [contactFilter, setContactFilter] = useState('all');
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
+  const [maintenanceEndsAt, setMaintenanceEndsAt] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Statistics Telemetry
@@ -157,8 +159,10 @@ export const AdminPage: React.FC = () => {
       ]);
 
       if (overRes.data.success) {
-        setOverview(overRes.data.data || {});
+        setOverview(overRes.data.data);
         setIsMaintenance(overRes.data.data.is_maintenance || false);
+        setMaintenanceMessage(overRes.data.data.maintenance_details?.message || '');
+        setMaintenanceEndsAt(overRes.data.data.maintenance_details?.scheduled_ends_at || '');
       }
       if (subRes.data.success) setSubscribers(subRes.data.data.requests || []);
       if (contRes.data.success) setContacts(contRes.data.data.messages || []);
@@ -420,6 +424,8 @@ export const AdminPage: React.FC = () => {
     try {
       const res = await apiClient.post('/admin/maintenance/toggle', {
         is_active: !isMaintenance,
+        message: maintenanceMessage,
+        scheduled_end: maintenanceEndsAt,
       });
       alert(res.data.message);
       setIsMaintenance(!isMaintenance);
@@ -495,28 +501,48 @@ export const AdminPage: React.FC = () => {
         </div>
 
         {/* Global Maintenance Toggle */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-2 px-4 rounded-2xl border border-white/10 shadow-inner">
-          <div className="text-right">
-            <div className="text-xs font-black text-white">وضع الصيانة العام</div>
-            <div className="text-[10px] text-slate-400">
-              {isMaintenance ? (
-                <span className="text-rose-400 font-bold">نشط (المنصة مغلقة للمستخدمين)</span>
-              ) : (
-                <span className="text-emerald-400 font-bold">متاح للجميع بشكل طبيعي</span>
-              )}
+        <div className="flex-1 max-w-md bg-slate-950/80 p-4 rounded-2xl border border-rose-500/10 shadow-inner ml-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-sm font-black text-white flex items-center gap-2">
+                وضع الصيانة العام
+                {isMaintenance && <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] uppercase">نشط حالياً</span>}
+              </div>
+              <div className="text-[10px] text-slate-400">إيقاف المنصة لجميع المستخدمين عدا مدراء النظام.</div>
+            </div>
+            <button
+              onClick={handleToggleMaintenance}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-xs ${
+                isMaintenance
+                  ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)] hover:bg-rose-600'
+                  : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              <Power className="w-3.5 h-3.5" />
+              <span>{isMaintenance ? 'إنهاء الصيانة' : 'تفعيل الصيانة'}</span>
+            </button>
+          </div>
+          
+          <div className="space-y-2 pt-2 border-t border-white/5">
+            <div>
+              <input
+                type="text"
+                value={maintenanceMessage}
+                onChange={(e) => setMaintenanceMessage(e.target.value)}
+                placeholder="رسالة الصيانة التي تظهر للزوار..."
+                className="w-full bg-slate-900 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-400 whitespace-nowrap">ينتهي في:</span>
+              <input
+                type="datetime-local"
+                value={maintenanceEndsAt}
+                onChange={(e) => setMaintenanceEndsAt(e.target.value)}
+                className="flex-1 bg-slate-900 border border-white/5 rounded-lg px-2 py-1 text-[11px] text-white focus:outline-none focus:border-amber-500/50"
+              />
             </div>
           </div>
-          <button
-            onClick={handleToggleMaintenance}
-            className={`p-2.5 rounded-xl font-bold transition-all flex items-center gap-1.5 text-xs ${
-              isMaintenance
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
-                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
-            }`}
-          >
-            <Power className="w-4 h-4" />
-            <span>{isMaintenance ? 'إنهاء الصيانة' : 'تفعيل الصيانة'}</span>
-          </button>
         </div>
       </div>
 
@@ -826,6 +852,154 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Row 3: Recent Workspaces & System Health */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Recent Workspaces Table */}
+            <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900/80 border border-white/5 shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Building className="w-4 h-4 text-amber-400" />
+                  <span>أحدث الشركات المسجلة</span>
+                </h3>
+                <button
+                  onClick={() => handleTabChange('workspaces')}
+                  className="px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-bold transition-colors flex items-center gap-1"
+                >
+                  <span>عرض جميع الشركات</span>
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400">
+                      <th className="py-3 px-2">الشركة / المساحة</th>
+                      <th className="py-3 px-2">المستخدمين</th>
+                      <th className="py-3 px-2">البوتات</th>
+                      <th className="py-3 px-2">المحادثات</th>
+                      <th className="py-3 px-2">الحالة</th>
+                      <th className="py-3 px-2">تاريخ الانضمام</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-slate-200">
+                    {(overview?.recent_workspaces || []).map((ws: any) => (
+                      <tr key={ws.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-2">
+                          <div className="font-bold text-white">{ws.company_name}</div>
+                          <div className="text-[10px] text-slate-400">ID: #{ws.id}</div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-slate-300 font-mono">
+                            {ws.users_count}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className="px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">
+                            {ws.bots_count}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                            {ws.conversations_count}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2">
+                          {ws.status === 'active' ? (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">نشطة</span>
+                          ) : ws.status === 'suspended' ? (
+                            <span className="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 text-[10px] font-bold">موقوفة</span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-bold">{ws.status}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 text-[10px] text-slate-400">{ws.created_at}</td>
+                      </tr>
+                    ))}
+                    {(!overview?.recent_workspaces || overview.recent_workspaces.length === 0) && (
+                      <tr>
+                        <td colSpan={6} className="text-center py-6 text-slate-400">لا توجد شركات مسجلة بعد</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* System Health Status */}
+            <div className="space-y-4">
+              <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 shadow-xl">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                  <Server className="w-4 h-4 text-amber-400" />
+                  <span>حالة الخدمات الأساسية</span>
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/80 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <Database className="w-4 h-4 text-sky-400" />
+                      <div>
+                        <div className="text-xs font-bold text-white">قاعدة البيانات (Primary DB)</div>
+                        <div className="text-[10px] text-slate-400">PostgreSQL / Vector DB</div>
+                      </div>
+                    </div>
+                    {overview?.system_health?.database ? (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> متصل</span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> غير متصل</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/80 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <Cpu className="w-4 h-4 text-rose-400" />
+                      <div>
+                        <div className="text-xs font-bold text-white">خادم Redis</div>
+                        <div className="text-[10px] text-slate-400">Queues & Pub/Sub</div>
+                      </div>
+                    </div>
+                    {overview?.system_health?.redis ? (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> متصل</span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> غير متصل</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/80 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <Activity className="w-4 h-4 text-amber-400" />
+                      <div>
+                        <div className="text-xs font-bold text-white">WebSocket Gateway</div>
+                        <div className="text-[10px] text-slate-400">Node.js / Socket.io :3000</div>
+                      </div>
+                    </div>
+                    {overview?.system_health?.websocket ? (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> يعمل</span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> معطل</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Knowledge Base Stats */}
+              <div className="p-6 rounded-3xl bg-slate-900/80 border border-white/5 shadow-xl">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <span>قاعدة المعرفة والقواعد</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-white/5">
+                    <div className="text-xl font-black text-white">{overview?.total_knowledge || 0}</div>
+                    <div className="text-[10px] text-slate-400">مستند معرفي</div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-white/5">
+                    <div className="text-xl font-black text-white">{overview?.total_rules || 0}</div>
+                    <div className="text-[10px] text-slate-400">قاعدة رد فوري</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Pending Subscribers & Contact Inquiries Pipelines */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Subscriber Approvals */}
@@ -852,7 +1026,7 @@ export const AdminPage: React.FC = () => {
                     <div key={sub.id} className="p-3.5 rounded-2xl bg-slate-950/80 border border-white/5 flex items-center justify-between gap-3">
                       <div>
                         <div className="text-xs font-bold text-white">{sub.name} - {sub.company_name || 'متجر جديد'}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">{sub.email} • {sub.phone || 'بدون هاتف'}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{sub.email} • <span dir="ltr">{sub.phone || 'بدون هاتف'}</span></div>
                         <span className="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold uppercase mt-1 inline-block">
                           {sub.selected_plan || 'Starter'}
                         </span>
@@ -929,7 +1103,7 @@ export const AdminPage: React.FC = () => {
                             {msg.status === 'new' ? 'جديد' : msg.status === 'in_progress' ? 'متابعة' : 'تم الحل'}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-400">{msg.email} • {msg.phone || 'بدون هاتف'}</div>
+                        <div className="text-[10px] text-slate-400">{msg.email} • <span dir="ltr">{msg.phone || 'بدون هاتف'}</span></div>
                         <p className="text-xs text-slate-300 line-clamp-2">{msg.message}</p>
                       </div>
                       <select

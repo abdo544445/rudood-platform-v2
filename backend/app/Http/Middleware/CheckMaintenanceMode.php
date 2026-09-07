@@ -27,7 +27,7 @@ class CheckMaintenanceMode
         }
 
         // 3. Allow Super Admin login routes (/admin/login) so administrators can log in
-        if ($request->is('admin/login*')) {
+        if ($request->is('admin/login*') || $request->is('api/v1/auth/login') || $request->is('api/v1/system/maintenance/status')) {
             return $next($request);
         }
 
