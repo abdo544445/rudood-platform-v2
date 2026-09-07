@@ -191,6 +191,21 @@ class AdminController extends BaseApiController
         $plan = $subReq->selected_plan ?: 'starter';
         $password = Str::random(10);
 
+        // Check if user already exists with this email
+        $existingUser = User::where('email', $subReq->email)->first();
+
+        // CASE A: user already exists with a valid workspace — just activate it
+        if ($existingUser && $existingUser->workspace_id && $existingUser->workspace) {
+            $existingUser->workspace->update(['status' => 'active', 'plan_id' => $plan]);
+            $existingUser->workspace->bots()->update(['is_active' => true]);
+            $subReq->update([
+                'status'      => 'approved',
+                'reviewed_at' => now(),
+                'admin_notes' => $request->get('admin_notes', 'تمت الموافقة — تفعيل مساحة عمل قائمة.'),
+            ]);
+            return $this->success(['workspace' => $existingUser->workspace, 'user' => $existingUser], 'تم تفعيل الحساب القائم بنجاح ✓');
+        }
+
         $workspace = Workspace::create([
             'company_name'           => $subReq->company_name ?: ($subReq->name . ' Store'),
             'plan_id'                => $plan,
@@ -202,14 +217,21 @@ class AdminController extends BaseApiController
             },
         ]);
 
-        $user = User::create([
-            'name'         => $subReq->name,
-            'email'        => $subReq->email,
-            'phone'        => $subReq->phone,
-            'password'     => Hash::make($password),
-            'role'         => 'owner',
-            'workspace_id' => $workspace->id,
-        ]);
+        // CASE B: user exists but no workspace (orphaned) — update, don't insert
+        if ($existingUser) {
+            $existingUser->update(['workspace_id' => $workspace->id, 'role' => 'owner']);
+            $user = $existingUser;
+        } else {
+            // CASE C: truly new user
+            $user = User::create([
+                'name'         => $subReq->name,
+                'email'        => $subReq->email,
+                'phone'        => $subReq->phone,
+                'password'     => Hash::make($password),
+                'role'         => 'owner',
+                'workspace_id' => $workspace->id,
+            ]);
+        }
 
         $bot = Bot::create([
             'workspace_id'    => $workspace->id,
@@ -459,7 +481,8 @@ class AdminController extends BaseApiController
             'plan_id'      => 'required|string|max:50',
             'status'       => 'required|in:active,suspended,trial',
             'owner_name'   => 'required|string|max:255',
-            'owner_email'  => 'required|email|max:255|unique:users,email',
+            // Allow existing email — we'll assign the new workspace to them instead of crashing
+            'owner_email'  => 'required|email|max:255',
             'owner_phone'  => 'nullable|string|max:50',
             'password'     => 'required|string|min:6',
         ]);
@@ -475,14 +498,17 @@ class AdminController extends BaseApiController
             },
         ]);
 
-        $user = User::create([
-            'name'         => $validated['owner_name'],
-            'email'        => $validated['owner_email'],
-            'phone'        => $validated['owner_phone'] ?? null,
-            'password'     => Hash::make($validated['password']),
-            'role'         => 'owner',
-            'workspace_id' => $workspace->id,
-        ]);
+        // Use updateOrCreate to safely handle existing emails
+        $user = User::updateOrCreate(
+            ['email' => $validated['owner_email']],
+            [
+                'name'         => $validated['owner_name'],
+                'phone'        => $validated['owner_phone'] ?? null,
+                'password'     => Hash::make($validated['password']),
+                'role'         => 'owner',
+                'workspace_id' => $workspace->id,
+            ]
+        );
 
         Bot::create([
             'workspace_id'    => $workspace->id,
