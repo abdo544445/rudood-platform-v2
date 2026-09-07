@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { 
   Share2, 
   MessageCircle, 
-  Send, 
   Camera, 
   Globe, 
   Save,
@@ -13,6 +12,7 @@ import { apiClient } from '../../services/apiClient';
 import { soundEngine } from '../../services/soundEngine';
 import { SpotlightCard } from '../../components/common/SpotlightCard';
 import { PhoneSimulator, type ChannelPlatform } from '../../components/common/PhoneSimulator';
+import { TelegramIcon } from '../../components/icons/TelegramIcon';
 
 export const ChannelsPage: React.FC = () => {
   const [channels, setChannels] = useState<any>({});
@@ -290,7 +290,7 @@ export const ChannelsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-                <Send className="w-6 h-6" />
+                <TelegramIcon className="w-6 h-6" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white">بوت تليجرام (Telegram Bot)</h4>

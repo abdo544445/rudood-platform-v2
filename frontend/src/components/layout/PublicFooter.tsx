@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Heart, Shield, Phone, Mail, Globe } from 'lucide-react';
+import { TelegramIcon } from '../icons/TelegramIcon';
 
 export const PublicFooter: React.FC = () => {
   return (
@@ -40,7 +41,7 @@ export const PublicFooter: React.FC = () => {
           <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider">التكاملات المدعومة</h4>
           <ul className="space-y-2 text-xs text-slate-400">
             <li className="flex items-center gap-2"><span className="text-emerald-400">●</span> واتساب كلاود الرسمي (WhatsApp Cloud API)</li>
-            <li className="flex items-center gap-2"><span className="text-sky-400">●</span> تليجرام بوت (Telegram Bot)</li>
+            <li className="flex items-center gap-2"><TelegramIcon className="w-3.5 h-3.5 text-sky-400" /> تليجرام بوت (Telegram Bot)</li>
             <li className="flex items-center gap-2"><span className="text-rose-400">●</span> إنستغرام دايركت (Instagram Direct)</li>
             <li className="flex items-center gap-2"><span className="text-amber-400">●</span> ويدجت الشات المباشر للمتاجر (Web Widget)</li>
             <li className="flex items-center gap-2"><span className="text-purple-400">●</span> منصات سلة، زد، وشوبيفاي</li>

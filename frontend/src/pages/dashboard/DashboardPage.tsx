@@ -40,6 +40,7 @@ import { SpotlightCard } from '../../components/common/SpotlightCard';
 import { ActivityTicker } from '../../components/dashboard/ActivityTicker';
 import { SkeletonCard, SkeletonTable } from '../../components/common/SkeletonLoader';
 import { soundEngine } from '../../services/soundEngine';
+import { TelegramIcon } from '../../components/icons/TelegramIcon';
 
 export const DashboardPage: React.FC = () => {
   const { user, bot } = useAuthStore();
@@ -608,20 +609,26 @@ export const DashboardPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
                 {channels.length > 0 ? (
-                  channels.map((ch: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-slate-800/40">
-                      <td className="py-2.5 font-bold text-white text-[11px]">{ch.platform}</td>
-                      <td className="py-2.5">
-                        {ch.is_connected ? (
-                          <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> متصل
-                          </span>
-                        ) : (
-                          <span className="text-rose-400 font-bold text-[11px]">مفصول</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                  channels.map((ch: any, idx: number) => {
+                    const isTelegram = String(ch.platform).toLowerCase().includes('telegram');
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40">
+                        <td className="py-2.5 font-bold text-white text-[11px] flex items-center gap-1.5">
+                          {isTelegram && <TelegramIcon className="w-3.5 h-3.5 text-[#2481cc]" />}
+                          <span>{ch.platform}</span>
+                        </td>
+                        <td className="py-2.5">
+                          {ch.is_connected ? (
+                            <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> متصل
+                            </span>
+                          ) : (
+                            <span className="text-rose-400 font-bold text-[11px]">مفصول</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr><td colSpan={2} className="py-6 text-center text-slate-500">لا توجد قنوات مسجلة</td></tr>
                 )}

@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { soundEngine } from '../../services/soundEngine';
 import { PhoneSimulator } from '../../components/common/PhoneSimulator';
 import { TokenMetrics } from '../../components/common/TokenMetrics';
+import { TelegramIcon } from '../../components/icons/TelegramIcon';
 
 export const BotSettingsPage: React.FC = () => {
   const { bot, fetchUser } = useAuthStore();
@@ -600,7 +601,7 @@ export const BotSettingsPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-200">WhatsApp</span>
               </div>
               <div className="p-2 rounded-xl bg-slate-950 border border-white/5 flex items-center gap-2">
-                <span className="text-sky-400 text-base">✈️</span>
+                <TelegramIcon className="w-4 h-4 text-[#2481cc]" />
                 <span className="text-xs font-bold text-slate-200">Telegram</span>
               </div>
               <div className="p-2 rounded-xl bg-slate-950 border border-white/5 flex items-center gap-2">

@@ -14,6 +14,7 @@ import {
   Camera,
   ShoppingBag
 } from 'lucide-react';
+import { TelegramIcon } from '../icons/TelegramIcon';
 import { soundEngine } from '../../services/soundEngine';
 
 export type ChannelPlatform = 'whatsapp' | 'telegram' | 'web' | 'instagram';
@@ -152,7 +153,7 @@ export const PhoneSimulator: React.FC<PhoneSimulatorProps> = ({
           bg: 'bg-[#17212b]',
           accent: '#2481cc',
           badge: 'Telegram Bot',
-          icon: Send,
+          icon: TelegramIcon,
           bubbleBot: 'bg-[#182533] text-slate-100',
           bubbleUser: 'bg-[#2b5278] text-slate-100',
         };
@@ -186,7 +187,7 @@ export const PhoneSimulator: React.FC<PhoneSimulatorProps> = ({
       <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/90 border border-white/10 mb-4 shadow-xl z-20">
         {[
           { id: 'whatsapp' as ChannelPlatform, label: 'واتساب', icon: MessageCircle, color: 'text-emerald-400' },
-          { id: 'telegram' as ChannelPlatform, label: 'تليجرام', icon: Send, color: 'text-sky-400' },
+          { id: 'telegram' as ChannelPlatform, label: 'تليجرام', icon: TelegramIcon, color: 'text-[#2481cc]' },
           { id: 'web' as ChannelPlatform, label: 'الودجت', icon: Globe, color: 'text-amber-400' },
           { id: 'instagram' as ChannelPlatform, label: 'إنستغرام', icon: Camera, color: 'text-pink-400' },
         ].map((p) => {
