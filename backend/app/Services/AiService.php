@@ -378,71 +378,98 @@ class AiService
     public function fetchAvailableModels(string $provider, ?string $apiKey = null, ?string $baseUrl = null): array
     {
         $defaults = match ($provider) {
-            'gemini'            => ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
-            'openai'            => ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-            'anthropic'         => ['claude-3-5-sonnet-20240620', 'claude-3-haiku-20240307'],
-            'openai_compatible' => ['gpt-4o-mini', 'llama-3.1-70b', 'mistral-large'],
+            'gemini'            => [
+                'gemini-1.5-flash',
+                'gemini-1.5-pro',
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-lite',
+                'gemini-1.0-pro'
+            ],
+            'openai'            => [
+                'gpt-4o',
+                'gpt-4o-mini',
+                'gpt-4-turbo',
+                'gpt-3.5-turbo',
+                'o1-preview',
+                'o1-mini'
+            ],
+            'anthropic'         => [
+                'claude-3-5-sonnet-20241022',
+                'claude-3-5-haiku-20241022',
+                'claude-3-opus-20240229',
+                'claude-3-sonnet-20240229',
+                'claude-3-haiku-20240307'
+            ],
+            'openai_compatible' => [
+                'llama-3.3-70b-versatile',
+                'llama-3.1-8b-instant',
+                'deepseek-chat',
+                'deepseek-reasoner',
+                'mixtral-8x7b-32768',
+                'mistral-large-latest',
+                'qwen-2.5-72b',
+                'gpt-4o-mini'
+            ],
             default             => ['gemini-1.5-flash', 'gemini-1.5-pro'],
         };
 
-        $apiKey = $apiKey ?: $this->bot->api_key;
+        $apiKey = $apiKey ?: $this->bot?->api_key;
         if (!$apiKey) {
             $apiKey = match ($provider) {
                 'gemini'            => env('GEMINI_API_KEY'),
                 'openai'            => env('OPENAI_API_KEY'),
                 'anthropic'         => env('ANTHROPIC_API_KEY'),
-                'openai_compatible' => $this->bot->api_key ?: env('OPENAI_API_KEY'),
+                'openai_compatible' => $this->bot?->api_key ?: env('OPENAI_API_KEY'),
                 default             => env('GEMINI_API_KEY'),
             };
         }
 
-        if ($apiKey) {
-            try {
-                if ($provider === 'openai' || $provider === 'openai_compatible') {
-                    $base = rtrim($baseUrl ?: $this->bot->api_base_url ?: 'https://api.openai.com/v1', '/');
-                    $url  = $base . '/models';
-
-                    $res = Http::withToken($apiKey)->timeout(12)->get($url);
+        // Try querying live endpoint if available
+        try {
+            if ($provider === 'openai_compatible' || $provider === 'openai') {
+                $base = rtrim($baseUrl ?: $this->bot?->api_base_url ?: ($provider === 'openai' ? 'https://api.openai.com/v1' : ''), '/');
+                if (!empty($base)) {
+                    $url = $base . '/models';
+                    $http = Http::timeout(8);
+                    if (!empty($apiKey)) {
+                        $http = $http->withToken($apiKey);
+                    }
+                    $res = $http->get($url);
                     if ($res->successful()) {
                         $list = collect($res->json('data', []))->pluck('id')->filter()->values()->toArray();
                         if (!empty($list)) {
                             return ['success' => true, 'models' => $list];
                         }
                     }
-                } elseif ($provider === 'gemini') {
-                    $url = "https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}";
-                    $res = Http::timeout(12)->get($url);
-                    if ($res->successful()) {
-                        $list = collect($res->json('models', []))
-                            ->pluck('name')
-                            ->map(fn($m) => str_replace('models/', '', $m))
-                            ->filter(fn($m) => str_contains($m, 'gemini') || str_contains($m, 'flash') || str_contains($m, 'pro'))
-                            ->values()
-                            ->toArray();
-                        if (!empty($list)) {
-                            return ['success' => true, 'models' => $list];
-                        }
-                    }
-                } elseif ($provider === 'anthropic') {
-                    return [
-                        'success' => true,
-                        'models'  => [
-                            'claude-3-5-sonnet-20240620',
-                            'claude-3-opus-20240229',
-                            'claude-3-sonnet-20240229',
-                            'claude-3-haiku-20240307',
-                        ],
-                    ];
                 }
-            } catch (\Throwable $e) {
-                \Log::warning('fetchAvailableModels live query failed: ' . $e->getMessage());
+            } elseif ($provider === 'gemini' && !empty($apiKey)) {
+                $url = "https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}";
+                $res = Http::timeout(8)->get($url);
+                if ($res->successful()) {
+                    $list = collect($res->json('models', []))
+                        ->pluck('name')
+                        ->map(fn($m) => str_replace('models/', '', $m))
+                        ->filter(fn($m) => str_contains($m, 'gemini') || str_contains($m, 'flash') || str_contains($m, 'pro'))
+                        ->values()
+                        ->toArray();
+                    if (!empty($list)) {
+                        return ['success' => true, 'models' => $list];
+                    }
+                }
+            } elseif ($provider === 'anthropic') {
+                return [
+                    'success' => true,
+                    'models'  => $defaults,
+                ];
             }
+        } catch (\Throwable $e) {
+            \Log::warning('fetchAvailableModels live query failed: ' . $e->getMessage());
         }
 
         return [
             'success' => true,
             'models'  => $defaults,
-            'notice'  => 'تم عرض النماذج الشائعة للمزود.',
+            'notice'  => 'تم عرض قائمة النماذج الموصى بها للمزود المختار.',
         ];
     }
 

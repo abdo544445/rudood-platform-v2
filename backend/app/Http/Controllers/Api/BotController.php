@@ -19,27 +19,24 @@ class BotController extends BaseApiController
 
         return $this->success([
             'bot' => [
-                'id'                => $bot->id,
-                'name'              => $bot->name,
-                'is_active'         => (bool) $bot->is_active,
-                'bot_tone'          => $bot->bot_tone ?: 'friendly',
-                'welcome_message'   => $bot->welcome_message,
-                'system_prompt'     => $bot->system_prompt,
-                'ai_provider'       => $bot->ai_provider ?: 'gemini',
-                'model_type'        => $bot->model_type ?: 'gemini-1.5-flash',
-                'api_base_url'      => $bot->api_base_url,
-                'max_tokens'        => $bot->max_tokens ?: 1500,
-                'temperature'       => $bot->temperature !== null ? (float)$bot->temperature : 0.7,
-                'has_custom_key'    => !empty($bot->api_key),
-                'api_key_encrypted' => !empty($bot->api_key_encrypted) || !empty($bot->api_key),
-                'enable_rag'        => (bool) ($bot->enable_rag ?? true),
-                'enable_auto_rules' => (bool) ($bot->enable_auto_rules ?? true),
+                'id'              => $bot->id,
+                'name'            => $bot->name,
+                'is_active'       => (bool) $bot->is_active,
+                'bot_tone'        => $bot->bot_tone ?: 'friendly',
+                'welcome_message' => $bot->welcome_message,
+                'system_prompt'   => $bot->system_prompt,
+                'ai_provider'     => $bot->ai_provider ?: 'gemini',
+                'model_type'      => $bot->model_type ?: 'gemini-1.5-flash',
+                'api_base_url'    => $bot->api_base_url,
+                'has_custom_key'  => !empty($bot->api_key),
+                'enable_rag'      => (bool) ($bot->enable_rag ?? true),
+                'enable_auto_rules'=> (bool) ($bot->enable_auto_rules ?? true),
             ]
         ]);
     }
 
     /**
-     * Update Bot persona, tone, prompt, AI provider, and active status.
+     * Update Bot persona, tone, prompt, and active status.
      */
     public function updateSettings(Request $request): JsonResponse
     {
@@ -54,17 +51,10 @@ class BotController extends BaseApiController
             'ai_provider'      => 'nullable|string|in:gemini,openai,anthropic,openai_compatible',
             'model_type'       => 'nullable|string|max:100',
             'api_base_url'     => 'nullable|string|url|max:255',
-            'max_tokens'       => 'nullable|integer|min:100|max:8000',
-            'temperature'      => 'nullable|numeric|min:0|max:1',
-            'api_key'          => 'nullable|string|max:500',
             'is_active'        => 'nullable|boolean',
             'enable_rag'       => 'nullable|boolean',
             'enable_auto_rules'=> 'nullable|boolean',
         ]);
-
-        if (empty($validated['api_key'])) {
-            unset($validated['api_key']);
-        }
 
         $bot->update($validated);
 
@@ -98,9 +88,10 @@ class BotController extends BaseApiController
         $bot = $this->bot();
         $provider = $request->get('provider', $bot?->ai_provider ?: 'gemini');
         $apiKey = $request->get('api_key');
+        $baseUrl = $request->get('api_base_url', $bot?->api_base_url);
 
         $aiService = new AiService($bot);
-        $modelsResult = $aiService->fetchAvailableModels($provider, $apiKey);
+        $modelsResult = $aiService->fetchAvailableModels($provider, $apiKey, $baseUrl);
 
         return $this->success($modelsResult);
     }
