@@ -53,6 +53,53 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
+    // ── Public Contact Us Submission Endpoint ──────────────────────────────
+    Route::post('/contact', function (Request $request) {
+        $validated = $request->validate([
+            'name'    => 'required|string|max:255',
+            'email'   => 'required|email|max:255',
+            'phone'   => 'nullable|string|max:50',
+            'subject' => 'nullable|string|max:255',
+            'message' => 'required|string|max:5000',
+        ]);
+
+        $subject = $validated['subject'] ?? 'استفسار عام عبر الموقع';
+        if (!empty($validated['phone']) && !str_contains($validated['message'], $validated['phone'])) {
+            $formattedMessage = "[رقم الهاتف: {$validated['phone']}]\n" . $validated['message'];
+        } else {
+            $formattedMessage = $validated['message'];
+        }
+
+        $contact = \App\Models\ContactMessage::create([
+            'name'        => $validated['name'],
+            'email'       => $validated['email'],
+            'subject'     => $subject,
+            'message'     => $formattedMessage,
+            'status'      => 'new',
+            'ip_address'  => $request->ip(),
+            'admin_notes' => null,
+        ]);
+
+        try {
+            \App\Models\AuditLog::log(
+                null,
+                'contact.received',
+                "تم استلام رسالة تواصل جديدة من {$contact->name} ({$contact->email})",
+                [
+                    'contact_id' => $contact->id,
+                    'subject'    => $contact->subject,
+                    'ip'         => $request->ip(),
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم استلام رسالتك بنجاح! سيقوم فريق خدمة العملاء بالرد عليك قريباً ✓',
+            'data'    => $contact,
+        ]);
+    });
+
     // ── Protected Endpoints (Requires Sanctum Bearer Token) ─────────────────
     Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -110,6 +157,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/subscribers/{id}/reject', [ApiAdminController::class, 'rejectSubscriber']);
             Route::get('/contacts', [ApiAdminController::class, 'contactMessages']);
             Route::put('/contacts/{id}', [ApiAdminController::class, 'updateContactStatus']);
+            Route::delete('/contacts/{id}', [ApiAdminController::class, 'deleteContactMessage']);
             Route::get('/audit-logs', [ApiAdminController::class, 'auditLogs']);
             Route::post('/maintenance/toggle', [ApiAdminController::class, 'toggleMaintenance']);
 

@@ -318,20 +318,43 @@ class AdminController extends BaseApiController
     }
 
     /**
-     * Update contact message status.
+     * Update contact message status and optional admin internal notes.
      */
     public function updateContactStatus(Request $request, int $id): JsonResponse
     {
         if ($err = $this->checkSuperAdmin()) return $err;
 
         $validated = $request->validate([
-            'status' => 'required|string|in:new,in_progress,resolved',
+            'status'      => 'nullable|string|in:new,in_progress,resolved',
+            'admin_notes' => 'nullable|string',
         ]);
 
         $message = ContactMessage::findOrFail($id);
-        $message->update($validated);
+        
+        $updateData = [];
+        if (!empty($validated['status'])) {
+            $updateData['status'] = $validated['status'];
+        }
+        if ($request->has('admin_notes')) {
+            $updateData['admin_notes'] = $validated['admin_notes'];
+        }
 
-        return $this->success($message, 'تم تحديث حالة الرسالة بنجاح ✓');
+        $message->update($updateData);
+
+        return $this->success($message, 'تم تحديث بيانات وحالة الرسالة بنجاح ✓');
+    }
+
+    /**
+     * Delete contact message by Super Admin.
+     */
+    public function deleteContactMessage(int $id): JsonResponse
+    {
+        if ($err = $this->checkSuperAdmin()) return $err;
+
+        $message = ContactMessage::findOrFail($id);
+        $message->delete();
+
+        return $this->success(null, 'تم حذف رسالة التواصل بنجاح');
     }
 
     /**

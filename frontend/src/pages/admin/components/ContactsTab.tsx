@@ -4,7 +4,9 @@ import {
   Search, 
   MessageCircle, 
   Eye, 
-  X
+  X,
+  Trash2,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '../../../services/apiClient';
@@ -15,6 +17,8 @@ export const ContactsTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'in_progress' | 'resolved'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [stats, setStats] = useState({ total: 0, new: 0, in_progress: 0, resolved: 0 });
 
   useEffect(() => {
@@ -52,6 +56,40 @@ export const ContactsTab: React.FC = () => {
       }
     } catch {
       toast.error('تعذر تحديث حالة الرسالة');
+    }
+  };
+
+  const handleSaveNotes = async (id: number) => {
+    setIsSavingNotes(true);
+    try {
+      const res = await apiClient.put(`/admin/contacts/${id}`, { admin_notes: adminNotes });
+      if (res.data.success) {
+        toast.success('تم حفظ ملاحظات الإدارة بنجاح ✓');
+        if (selectedMessage && selectedMessage.id === id) {
+          setSelectedMessage({ ...selectedMessage, admin_notes: adminNotes });
+        }
+        fetchContacts();
+      }
+    } catch {
+      toast.error('تعذر حفظ ملاحظات الإدارة');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
+  const handleDeleteContact = async (id: number) => {
+    if (!confirm('هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟')) return;
+    try {
+      const res = await apiClient.delete(`/admin/contacts/${id}`);
+      if (res.data.success) {
+        toast.success('تم حذف الرسالة بنجاح ✓');
+        if (selectedMessage && selectedMessage.id === id) {
+          setSelectedMessage(null);
+        }
+        fetchContacts();
+      }
+    } catch {
+      toast.error('تعذر حذف الرسالة');
     }
   };
 
@@ -207,13 +245,25 @@ export const ContactsTab: React.FC = () => {
                       </td>
 
                       <td className="p-4 text-center">
-                        <button
-                          onClick={() => setSelectedMessage(msg)}
-                          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>عرض</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setSelectedMessage(msg);
+                              setAdminNotes(msg.admin_notes || '');
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>عرض</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteContact(msg.id)}
+                            className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/5 transition-colors cursor-pointer"
+                            title="حذف الرسالة"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -227,7 +277,7 @@ export const ContactsTab: React.FC = () => {
       {/* View Message Modal */}
       {selectedMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-amber-400" />
@@ -265,14 +315,44 @@ export const ContactsTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
+              {/* Admin Notes Section */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/20 space-y-2">
+                <label className="text-amber-300 block font-bold">ملاحظات الإدارة الداخلية (Admin Notes):</label>
+                <textarea
+                  rows={2}
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="أضف ملاحظات المتابعة هنا..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 resize-none"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveNotes(selectedMessage.id)}
+                    disabled={isSavingNotes}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-bold hover:bg-amber-500 hover:text-slate-950 transition-colors flex items-center gap-1 cursor-pointer text-xs"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{isSavingNotes ? 'جاري الحفظ...' : 'حفظ الملاحظة'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5">
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400">تحديث الحالة:</span>
                   <button
                     onClick={() => handleUpdateStatus(selectedMessage.id, 'resolved')}
-                    className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold hover:bg-emerald-500 hover:text-slate-950 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold hover:bg-emerald-500 hover:text-slate-950 transition-colors cursor-pointer"
                   >
                     تعليم كمكتملة ✓
+                  </button>
+                  <button
+                    onClick={() => handleDeleteContact(selectedMessage.id)}
+                    className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 font-bold hover:bg-rose-500 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>حذف</span>
                   </button>
                 </div>
 

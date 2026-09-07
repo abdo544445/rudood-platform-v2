@@ -29,17 +29,20 @@ export const ContactPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await apiClient.post('/admin/contacts', {
+      const res = await apiClient.post('/contact', {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
-        message: `[الموضوع: ${formData.subject || 'عام'}] ${formData.message}`,
+        phone: formData.phone || undefined,
+        subject: formData.subject || undefined,
+        message: formData.message,
       });
 
-      setIsSuccess(true);
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    } catch (e) {
-      alert('تعذر إرسال الرسالة، يرجى المحاولة لاحقاً');
+      if (res.data.success) {
+        setIsSuccess(true);
+        setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      }
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'تعذر إرسال الرسالة، يرجى المحاولة لاحقاً');
     } finally {
       setIsLoading(false);
     }
