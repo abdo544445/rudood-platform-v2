@@ -64,55 +64,55 @@ class SubscriberRequest extends Model
     public function approveAndProvision(array $customParams = [], ?int $adminId = null): User
     {
         return DB::transaction(function () use ($customParams, $adminId) {
-            // 4. Find existing user by email
-            $user = User::where('email', $this->email)->first();
 
-            // If user already has a workspace (self-registered), activate their workspace & bot!
-            if ($user && $user->workspace_id) {
-                if ($user->workspace) {
-                    $user->workspace->update([
-                        'status'  => 'active',
-                        'plan_id' => $customParams['selected_plan'] ?? $this->selected_plan ?? $user->workspace->plan_id ?? 'starter',
-                    ]);
+            // ── Step 0: Check for an existing user by email (prevents duplicate-key crash) ──
+            $existingUser = User::where('email', $this->email)->first();
 
-                    // Activate bot if inactive
-                    $user->workspace->bots()->update(['is_active' => true]);
+            // ── CASE A: User already exists AND already has a valid workspace ──────────────
+            if ($existingUser && $existingUser->workspace_id && $existingUser->workspace) {
+                // Just activate the existing workspace + bot, no new records needed
+                $existingUser->workspace->update([
+                    'status'  => 'active',
+                    'plan_id' => $customParams['selected_plan'] ?? $this->selected_plan ?? $existingUser->workspace->plan_id ?? 'starter',
+                ]);
 
-                    // Ensure subscription record exists and is active
-                    Subscription::updateOrCreate(
-                        ['workspace_id' => $user->workspace->id],
-                        [
-                            'plan_name' => $user->workspace->plan_id ?: 'starter',
-                            'price'     => match($user->workspace->plan_id) {
-                                'starter'    => 39.00,
-                                'enterprise' => 199.00,
-                                default      => 79.00,
-                            },
-                            'status'    => 'active',
-                            'renews_at' => now()->addMonth(),
-                        ]
-                    );
-                }
+                $existingUser->workspace->bots()->update(['is_active' => true]);
 
-                // Just mark this request as approved and link to the existing user
+                Subscription::updateOrCreate(
+                    ['workspace_id' => $existingUser->workspace->id],
+                    [
+                        'plan_name' => $existingUser->workspace->plan_id ?: 'starter',
+                        'price'     => match($existingUser->workspace->plan_id) {
+                            'starter'    => 39.00,
+                            'enterprise' => 199.00,
+                            default      => 79.00,
+                        },
+                        'status'    => 'active',
+                        'renews_at' => now()->addMonth(),
+                    ]
+                );
+
                 $this->update([
                     'status'          => 'approved',
                     'approved_by'     => $adminId ?? (auth()->id() ?? null),
                     'approved_at'     => now(),
-                    'created_user_id' => $user->id,
+                    'created_user_id' => $existingUser->id,
                     'admin_notes'     => ($customParams['admin_notes'] ?? '') . ' [تم اعتماد وتفعيل مساحة العمل للمستخدم بنجاح]',
                 ]);
-                return $user;
+
+                return $existingUser;
             }
 
-            $companyName = $customParams['company_name'] ?? $this->company_name ?? ($this->name . "'s Store");
-            $plan = $customParams['selected_plan'] ?? $this->selected_plan ?? 'professional';
-            $password = $customParams['password'] ?? 'password123';
-            $botName = $customParams['bot_name'] ?? ('مساعد ' . $companyName . ' الذكي');
-            $aiProvider = $customParams['ai_provider'] ?? 'gemini';
-            $modelType = $customParams['model_type'] ?? 'gemini-1.5-flash';
-            $botTone = $customParams['bot_tone'] ?? 'friendly';
-            $systemPrompt = $customParams['system_prompt'] ?? 'أنت مساعد خدمة عملاء ذكي وخبير لمتجر ' . $companyName . '، تجيب على استفسارات الأسعار والمنتجات والشحن بلباقة وسرعة.';
+            // ── CASE B: Either no user at all, OR user exists but has an orphaned/missing workspace ──
+            // Build workspace + bot + subscription fresh
+            $companyName   = $customParams['company_name']   ?? $this->company_name   ?? ($this->name . "'s Store");
+            $plan          = $customParams['selected_plan']  ?? $this->selected_plan  ?? 'professional';
+            $password      = $customParams['password']       ?? 'password123';
+            $botName       = $customParams['bot_name']       ?? ('مساعد ' . $companyName . ' الذكي');
+            $aiProvider    = $customParams['ai_provider']    ?? 'gemini';
+            $modelType     = $customParams['model_type']     ?? 'gemini-1.5-flash';
+            $botTone       = $customParams['bot_tone']       ?? 'friendly';
+            $systemPrompt  = $customParams['system_prompt']  ?? 'أنت مساعد خدمة عملاء ذكي وخبير لمتجر ' . $companyName . '، تجيب على استفسارات الأسعار والمنتجات والشحن بلباقة وسرعة.';
             $welcomeMessage = $customParams['welcome_message'] ?? 'أهلاً بك! 👋 مرحباً بكم في ' . $companyName . '، كيف يمكنني مساعدتك اليوم؟';
 
             // 1. Create Workspace
@@ -141,16 +141,24 @@ class SubscriberRequest extends Model
                 'workspace_id' => $workspace->id,
                 'plan_name'    => $plan,
                 'price'        => match($plan) {
-                    'starter'      => 39.00,
-                    'enterprise'   => 199.00,
-                    default        => 79.00,
+                    'starter'    => 39.00,
+                    'enterprise' => 199.00,
+                    default      => 79.00,
                 },
-                'status'       => 'active',
-                'renews_at'    => now()->addMonth(),
+                'status'    => 'active',
+                'renews_at' => now()->addMonth(),
             ]);
 
-            // 4. Create new user (no existing user without workspace)
-            if (!$user) {
+            // 4. Create or update user — NEVER insert if email already exists
+            if ($existingUser) {
+                // User exists but workspace was orphaned → assign the new workspace
+                $existingUser->update([
+                    'workspace_id' => $workspace->id,
+                    'role'         => 'owner',
+                ]);
+                $user = $existingUser;
+            } else {
+                // Truly new user
                 $user = User::create([
                     'name'         => $this->name,
                     'email'        => $this->email,
@@ -159,25 +167,21 @@ class SubscriberRequest extends Model
                     'workspace_id' => $workspace->id,
                     'role'         => 'owner',
                 ]);
-            } else {
-                // User exists but has no workspace — assign the new one
-                $user->update([
-                    'workspace_id' => $workspace->id,
-                    'role'         => 'owner',
-                ]);
             }
 
-            // 5. Update Request Status
+            // 5. Mark request as approved
             $this->update([
                 'status'          => 'approved',
                 'approved_by'     => $adminId ?? (auth()->id() ?? null),
                 'approved_at'     => now(),
                 'created_user_id' => $user->id,
+                'admin_notes'     => ($customParams['admin_notes'] ?? ''),
             ]);
 
             return $user;
         });
     }
+
 
     /**
      * Get the formatted welcome message text.
