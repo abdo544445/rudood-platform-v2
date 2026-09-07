@@ -40,27 +40,49 @@ export const BotSettingsPage: React.FC = () => {
 
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [hasCustomKey, setHasCustomKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [isFetchingModels, setIsFetchingModels] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (bot) {
-      setFormData({
-        name: bot.name || '',
-        bot_tone: bot.bot_tone || 'friendly',
-        welcome_message: bot.welcome_message || '',
-        system_prompt: (bot as any).system_prompt || '',
-        ai_provider: bot.ai_provider || 'gemini',
-        model_type: bot.model_type || 'gemini-1.5-flash',
-        api_base_url: (bot as any).api_base_url || '',
-        max_tokens: (bot as any).max_tokens || 1500,
-        temperature: (bot as any).temperature !== undefined ? (bot as any).temperature : 0.7,
-        is_active: bot.is_active !== undefined ? bot.is_active : true,
-      });
+  const fetchBotSettings = async () => {
+    try {
+      const res = await apiClient.get('/bot/settings');
+      if (res.data.success && res.data.data?.bot) {
+        const b = res.data.data.bot;
+        setFormData({
+          name: b.name || '',
+          bot_tone: b.bot_tone || 'friendly',
+          welcome_message: b.welcome_message || '',
+          system_prompt: b.system_prompt || '',
+          ai_provider: b.ai_provider || 'gemini',
+          model_type: b.model_type || 'gemini-1.5-flash',
+          api_base_url: b.api_base_url || '',
+          max_tokens: b.max_tokens || 1500,
+          temperature: b.temperature !== undefined ? b.temperature : 0.7,
+          is_active: b.is_active !== undefined ? b.is_active : true,
+        });
+        setHasCustomKey(Boolean(b.has_custom_key));
+      }
+    } catch (e) {
+      if (bot) {
+        setFormData(prev => ({
+          ...prev,
+          name: bot.name || prev.name,
+          bot_tone: bot.bot_tone || prev.bot_tone,
+          welcome_message: bot.welcome_message || prev.welcome_message,
+          ai_provider: bot.ai_provider || prev.ai_provider,
+          model_type: bot.model_type || prev.model_type,
+          is_active: bot.is_active !== undefined ? bot.is_active : prev.is_active,
+        }));
+      }
     }
-  }, [bot]);
+  };
+
+  useEffect(() => {
+    fetchBotSettings();
+  }, []);
 
   const handleToggleActive = async () => {
     try {
@@ -70,6 +92,7 @@ export const BotSettingsPage: React.FC = () => {
       const res = await apiClient.post('/bot/toggle', { is_active: nextState });
       if (res.data.success) {
         fetchUser();
+        fetchBotSettings();
         if (nextState) {
           toast.success('تم تفعيل المساعد الذكي بنجاح 🟢');
         } else {
@@ -149,10 +172,11 @@ export const BotSettingsPage: React.FC = () => {
       if (res.data.success) {
         soundEngine.playSuccess();
         toast.success('تم حفظ وتحديث كافة إعدادات وسياسات البوت بنجاح ✓');
+        fetchBotSettings();
         fetchUser();
       }
-    } catch (e) {
-      toast.error('تعذر حفظ إعدادات البوت، يرجى مراجعة البيانات');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر حفظ إعدادات البوت، يرجى مراجعة البيانات');
     } finally {
       setIsSaving(false);
     }
@@ -168,15 +192,18 @@ export const BotSettingsPage: React.FC = () => {
         api_key: apiKey,
         ai_provider: formData.ai_provider,
         model_type: formData.model_type,
+        api_base_url: formData.api_base_url || undefined,
       });
       if (res.data.success) {
         soundEngine.playSuccess();
         toast.success('تم تشفير وحفظ مفتاح الـ API بنجاح في قاعدة البيانات (AES-256) ✓');
         setApiKey('');
+        setHasCustomKey(true);
+        fetchBotSettings();
         fetchUser();
       }
-    } catch (e) {
-      toast.error('تعذر حفظ مفتاح الـ API');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'تعذر حفظ مفتاح الـ API');
     } finally {
       setIsSavingKey(false);
     }
@@ -545,9 +572,16 @@ export const BotSettingsPage: React.FC = () => {
                 <Key className="w-4 h-4 text-amber-400" />
                 <span>مفتاح الـ API المشفر (AES-256)</span>
               </h4>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <Shield className="w-3 h-3" /> مشفّر
-              </span>
+              <div className="flex items-center gap-2">
+                {hasCustomKey && (
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    ✓ تم حفظ المفتاح
+                  </span>
+                )}
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                  <Shield className="w-3 h-3" /> مشفّر
+                </span>
+              </div>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
@@ -559,7 +593,7 @@ export const BotSettingsPage: React.FC = () => {
                 type={showApiKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="•••••••••••••••• ( املأ هنا للتحديث )"
+                placeholder={hasCustomKey ? "•••••••••••••••• (تم الحفظ - املأ هنا للتحديث)" : "•••••••••••••••• ( املأ هنا للتحديث )"}
                 className="w-full bg-[#070b14] border border-slate-800 rounded-2xl p-3.5 pr-4 pl-10 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 font-mono shadow-inner"
               />
               <button

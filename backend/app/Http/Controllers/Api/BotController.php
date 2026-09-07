@@ -28,7 +28,9 @@ class BotController extends BaseApiController
                 'ai_provider'     => $bot->ai_provider ?: 'gemini',
                 'model_type'      => $bot->model_type ?: 'gemini-1.5-flash',
                 'api_base_url'    => $bot->api_base_url,
-                'has_custom_key'  => !empty($bot->api_key),
+                'max_tokens'      => $bot->max_tokens ?? 1500,
+                'temperature'     => $bot->temperature ?? 0.7,
+                'has_custom_key'  => !empty($bot->api_key_encrypted),
                 'enable_rag'      => (bool) ($bot->enable_rag ?? true),
                 'enable_auto_rules'=> (bool) ($bot->enable_auto_rules ?? true),
             ]
@@ -50,7 +52,9 @@ class BotController extends BaseApiController
             'system_prompt'    => 'nullable|string',
             'ai_provider'      => 'nullable|string|in:gemini,openai,anthropic,openai_compatible',
             'model_type'       => 'nullable|string|max:100',
-            'api_base_url'     => 'nullable|string|url|max:255',
+            'api_base_url'     => 'nullable|string|max:255',
+            'max_tokens'       => 'nullable|integer|min:100|max:8000',
+            'temperature'      => 'nullable|numeric|min:0|max:1',
             'is_active'        => 'nullable|boolean',
             'enable_rag'       => 'nullable|boolean',
             'enable_auto_rules'=> 'nullable|boolean',
@@ -58,7 +62,20 @@ class BotController extends BaseApiController
 
         $bot->update($validated);
 
-        return $this->success($bot, 'تم حفظ وتحديث إعدادات البوت بنجاح ✓');
+        return $this->success([
+            'id'              => $bot->id,
+            'name'            => $bot->name,
+            'is_active'       => (bool) $bot->is_active,
+            'bot_tone'        => $bot->bot_tone,
+            'welcome_message' => $bot->welcome_message,
+            'system_prompt'   => $bot->system_prompt,
+            'ai_provider'     => $bot->ai_provider,
+            'model_type'      => $bot->model_type,
+            'api_base_url'    => $bot->api_base_url,
+            'max_tokens'      => $bot->max_tokens,
+            'temperature'     => $bot->temperature,
+            'has_custom_key'  => !empty($bot->api_key_encrypted),
+        ], 'تم حفظ وتحديث إعدادات البوت بنجاح ✓');
     }
 
     /**
@@ -97,7 +114,7 @@ class BotController extends BaseApiController
     }
 
     /**
-     * Securely store custom AI API Key.
+     * Securely store custom AI API Key and settings.
      */
     public function saveApiKey(Request $request): JsonResponse
     {
@@ -108,11 +125,25 @@ class BotController extends BaseApiController
             'api_key'      => 'required|string|max:500',
             'ai_provider'  => 'required|string|in:gemini,openai,anthropic,openai_compatible',
             'model_type'   => 'nullable|string|max:100',
-            'api_base_url' => 'nullable|string|url|max:255',
+            'api_base_url' => 'nullable|string|max:255',
         ]);
 
-        $bot->update($validated);
+        $bot->api_key = $validated['api_key'];
+        $bot->ai_provider = $validated['ai_provider'];
+        if (!empty($validated['model_type'])) {
+            $bot->model_type = $validated['model_type'];
+        }
+        if (array_key_exists('api_base_url', $validated)) {
+            $bot->api_base_url = $validated['api_base_url'];
+        }
+        $bot->save();
 
-        return $this->success(null, 'تم حفظ مفتاح API والربط بنجاح ✓');
+        return $this->success([
+            'has_custom_key' => true,
+            'ai_provider'    => $bot->ai_provider,
+            'model_type'     => $bot->model_type,
+            'api_base_url'   => $bot->api_base_url,
+        ], 'تم تشفير وحفظ مفتاح API وإعدادات المزود بنجاح في قاعدة البيانات ✓');
     }
 }
+

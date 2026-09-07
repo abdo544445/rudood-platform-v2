@@ -146,6 +146,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/channels', [ApiChannelController::class, 'index']);
         Route::post('/channels/{platform}/connect', [ApiChannelController::class, 'connect']);
         Route::post('/channels/{platform}/toggle', [ApiChannelController::class, 'toggle']);
+        Route::post('/channels/{platform}/poll', [ApiChannelController::class, 'poll']);
         Route::match(['get', 'post', 'put'], '/channels/widget/config', [ApiChannelController::class, 'widgetConfig']);
 
         // Super Admin Management (Role Protected)
