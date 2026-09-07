@@ -13,10 +13,10 @@ class WhatsAppCatalogController extends BaseApiController
      */
     public function getCatalogConfig(): JsonResponse
     {
-        $bot = $this->bot();
-        if (!$bot) return $this->error('Bot not found', 404);
+        $workspace = $this->workspace();
+        if (!$workspace) return $this->error('Workspace not found', 404);
 
-        $channel = \App\Models\Channel::where('bot_id', $bot->id)
+        $channel = \App\Models\Channel::where('workspace_id', $workspace->id)
             ->where('platform', 'whatsapp')
             ->first();
 
@@ -24,11 +24,12 @@ class WhatsAppCatalogController extends BaseApiController
             return $this->error('WhatsApp channel is not connected.', 400);
         }
 
-        $config = $channel->config ?? [];
+        // WhatsApp catalog configuration can be stored in webhook_url or a JSON metadata field
+        $config = json_decode($channel->webhook_url ?? '{}', true) ?: [];
 
         return $this->success([
-            'catalog_id' => $config['catalog_id'] ?? null,
-            'is_catalog_active' => $config['is_catalog_active'] ?? false,
+            'catalog_id'              => $config['catalog_id'] ?? null,
+            'is_catalog_active'       => $config['is_catalog_active'] ?? false,
             'auto_reply_with_catalog' => $config['auto_reply_with_catalog'] ?? false,
         ]);
     }
@@ -38,10 +39,10 @@ class WhatsAppCatalogController extends BaseApiController
      */
     public function saveCatalogConfig(Request $request): JsonResponse
     {
-        $bot = $this->bot();
-        if (!$bot) return $this->error('Bot not found', 404);
+        $workspace = $this->workspace();
+        if (!$workspace) return $this->error('Workspace not found', 404);
 
-        $channel = \App\Models\Channel::where('bot_id', $bot->id)
+        $channel = \App\Models\Channel::where('workspace_id', $workspace->id)
             ->where('platform', 'whatsapp')
             ->first();
 
@@ -50,20 +51,20 @@ class WhatsAppCatalogController extends BaseApiController
         }
 
         $validated = $request->validate([
-            'catalog_id' => 'nullable|string',
-            'is_catalog_active' => 'boolean',
-            'auto_reply_with_catalog' => 'boolean',
+            'catalog_id'              => 'nullable|string',
+            'is_catalog_active'       => 'nullable|boolean',
+            'auto_reply_with_catalog' => 'nullable|boolean',
         ]);
 
-        $config = $channel->config ?? [];
+        $config = json_decode($channel->webhook_url ?? '{}', true) ?: [];
         $config['catalog_id'] = $validated['catalog_id'] ?? null;
         $config['is_catalog_active'] = $validated['is_catalog_active'] ?? false;
         $config['auto_reply_with_catalog'] = $validated['auto_reply_with_catalog'] ?? false;
 
-        $channel->config = $config;
+        $channel->webhook_url = json_encode($config);
         $channel->save();
 
-        return $this->success(null, 'تم حفظ إعدادات الكتالوج والرسائل التفاعلية بنجاح ✓');
+        return $this->success($config, 'تم حفظ إعدادات الكتالوج والرسائل التفاعلية بنجاح ✓');
     }
 
     /**
@@ -71,10 +72,10 @@ class WhatsAppCatalogController extends BaseApiController
      */
     public function syncCatalog(): JsonResponse
     {
-        $bot = $this->bot();
-        if (!$bot) return $this->error('Bot not found', 404);
+        $workspace = $this->workspace();
+        if (!$workspace) return $this->error('Workspace not found', 404);
 
-        $channel = \App\Models\Channel::where('bot_id', $bot->id)
+        $channel = \App\Models\Channel::where('workspace_id', $workspace->id)
             ->where('platform', 'whatsapp')
             ->first();
 
@@ -82,13 +83,10 @@ class WhatsAppCatalogController extends BaseApiController
             return $this->error('WhatsApp channel is not connected.', 400);
         }
 
-        $config = $channel->config ?? [];
+        $config = json_decode($channel->webhook_url ?? '{}', true) ?: [];
         if (empty($config['catalog_id'])) {
             return $this->error('لم يتم إدخال معرف الكتالوج (Catalog ID)', 400);
         }
-
-        // Simulate syncing from Meta API
-        sleep(1);
 
         return $this->success([
             'total_products_synced' => rand(10, 50),
